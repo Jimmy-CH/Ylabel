@@ -63,7 +63,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
-    'rules',
+    # 'rules',
     'users',
     'organizations',
 ]
@@ -205,3 +205,57 @@ ORGANIZATION_MIXIN = 'organizations.mixins.OrganizationMixin'
 USER_MIXIN = 'users.mixins.UserMixin'
 ORGANIZATION_MEMBER_MIXIN = 'organizations.mixins.OrganizationMemberMixin'
 
+CREATE_ORGANIZATION = 'organizations.functions.create_organization'
+SAVE_USER = 'users.functions.save_user'
+POST_PROCESS_REIMPORT = 'core.utils.common.empty'
+USER_SERIALIZER = 'users.serializers.BaseUserSerializer'
+WHOAMI_USER_SERIALIZER = 'users.serializers.BaseWhoAmIUserSerializer'
+USER_SERIALIZER_UPDATE = 'users.serializers.BaseUserSerializerUpdate'
+TASK_SERIALIZER = 'tasks.serializers.BaseTaskSerializer'
+EXPORT_DATA_SERIALIZER = 'data_export.serializers.BaseExportDataSerializer'
+DATA_MANAGER_GET_ALL_COLUMNS = 'data_manager.functions.get_all_columns'
+DATA_MANAGER_ANNOTATIONS_MAP = {}
+DATA_MANAGER_ACTIONS = {}
+DATA_MANAGER_CUSTOM_FILTER_EXPRESSIONS = 'data_manager.functions.custom_filter_expressions'
+DATA_MANAGER_PREPROCESS_FILTER = 'data_manager.functions.preprocess_filter'
+DATA_MANAGER_CHECK_ACTION_PERMISSION = 'data_manager.actions.check_action_permission'
+BULK_UPDATE_IS_LABELED = 'tasks.functions.bulk_update_is_labeled_by_overlap'
+USER_LOGIN_FORM = 'users.forms.LoginForm'
+PROJECT_MIXIN = 'projects.mixins.ProjectMixin'
+TASK_MIXIN = 'tasks.mixins.TaskMixin'
+LSE_PROJECT = None
+GET_TASKS_AGREEMENT_QUERYSET = None
+SHOULD_ATTEMPT_GROUND_TRUTH_FIRST = None
+ANNOTATION_MIXIN = 'tasks.mixins.AnnotationMixin'
+ORGANIZATION_MIXIN = 'organizations.mixins.OrganizationMixin'
+USER_MIXIN = 'users.mixins.UserMixin'
+ORGANIZATION_MEMBER_MIXIN = 'organizations.mixins.OrganizationMemberMixin'
+MEMBER_PERM = 'core.api_permissions.MemberHasOwnerPermission'
+RECALCULATE_ALL_STATS = None
+GET_STORAGE_LIST = 'io_storages.functions.get_storage_list'
+STORAGE_LOAD_TASKS_JSON = 'io_storages.utils.load_tasks_json_lso'
+STORAGE_ANNOTATION_SERIALIZER = 'io_storages.serializers.StorageAnnotationSerializer'
+TASK_SERIALIZER_BULK = 'tasks.serializers.BaseTaskSerializerBulk'
+PREPROCESS_FIELD_NAME = 'data_manager.functions.preprocess_field_name'
+INTERACTIVE_DATA_SERIALIZER = 'data_export.serializers.BaseExportDataSerializerForInteractive'
+PROJECT_IMPORT_PERMISSION = 'projects.permissions.ProjectImportPermission'
+DELETE_TASKS_ANNOTATIONS_POSTPROCESS = None
+PROJECT_SAVE_DIMENSIONS_POSTPROCESS = None
+FEATURE_FLAGS_GET_USER_REPR = 'core.feature_flags.utils.get_user_repr'
+FEATURE_FLAGS_GET_USER_REPR_FROM_ORGANIZATION = 'core.feature_flags.utils.get_user_repr_from_organization'
+
+# Test factories
+ORGANIZATION_FACTORY = 'organizations.tests.factories.OrganizationFactory'
+PROJECT_FACTORY = 'projects.tests.factories.ProjectFactory'
+USER_FACTORY = 'users.tests.factories.UserFactory'
+
+# Feature Flags
+FEATURE_FLAGS_API_KEY = 'any key'
+
+# we may set feature flags from file
+FEATURE_FLAGS_FROM_FILE = False
+FEATURE_FLAGS_FILE = 'feature_flags.json'
+# or if file is not set, default is using offline mode
+FEATURE_FLAGS_OFFLINE = True
+# default value for feature flags (if not overridden by environment or client)
+FEATURE_FLAGS_DEFAULT_VALUE = False

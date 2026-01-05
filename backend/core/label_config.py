@@ -14,6 +14,7 @@ import pandas as pd
 import xmljson
 from django.conf import settings
 # from label_studio_sdk._extensions.label_studio_tools.core import label_config
+from label_studio_converter.utils import parse_config
 from rest_framework.exceptions import ValidationError
 
 from core.utils.io import find_file
@@ -27,7 +28,7 @@ SINGLE_VALUED_TAGS = {'choices': str, 'rating': int, 'number': float, 'textarea'
 _NOT_CONTROL_TAGS = {
     'Filter',
 }
-# # TODO: move configs in right place
+# TODO: move configs in right place
 _LABEL_CONFIG_SCHEMA = find_file('label_config_schema.json')
 with open(_LABEL_CONFIG_SCHEMA) as f:
     _LABEL_CONFIG_SCHEMA_DATA = json.load(f)
@@ -168,16 +169,16 @@ def extract_data_types(label_config):
     return data_type
 
 
-# def get_all_labels(label_config):
-#     outputs = parse_config(label_config)
-#     labels = defaultdict(list)
-#     dynamic_labels = defaultdict(bool)
-#     for control_name in outputs:
-#         for label in outputs[control_name].get('labels', []):
-#             labels[control_name].append(label)
-#         if outputs[control_name].get('dynamic_labels', False):
-#             dynamic_labels[control_name] = True
-#     return labels, dynamic_labels
+def get_all_labels(label_config):
+    outputs = parse_config(label_config)
+    labels = defaultdict(list)
+    dynamic_labels = defaultdict(bool)
+    for control_name in outputs:
+        for label in outputs[control_name].get('labels', []):
+            labels[control_name].append(label)
+        if outputs[control_name].get('dynamic_labels', False):
+            dynamic_labels[control_name] = True
+    return labels, dynamic_labels
 
 
 def get_annotation_tuple(from_name, to_name, type):
@@ -186,12 +187,12 @@ def get_annotation_tuple(from_name, to_name, type):
     return '|'.join([from_name, to_name, type.lower()])
 
 
-# def get_all_control_tag_tuples(label_config):
-#     outputs = parse_config(label_config)
-#     out = []
-#     for control_name, info in outputs.items():
-#         out.append(get_annotation_tuple(control_name, info['to_name'], info['type']))
-#     return out
+def get_all_control_tag_tuples(label_config):
+    outputs = parse_config(label_config)
+    out = []
+    for control_name, info in outputs.items():
+        out.append(get_annotation_tuple(control_name, info['to_name'], info['type']))
+    return out
 
 
 def get_all_object_tag_names(label_config):
@@ -434,21 +435,21 @@ def get_sample_task(label_config, secure_mode=False):
     return generated_task, annotations, predictions
 
 
-# def config_essential_data_has_changed(new_config_str, old_config_str):
-#     """Detect essential changes of the labeling config"""
-#     new_config = parse_config(new_config_str)
-#     old_config = parse_config(old_config_str)
-#
-#     for tag, new_info in new_config.items():
-#         if tag not in old_config:
-#             return True
-#         old_info = old_config[tag]
-#         if new_info['type'] != old_info['type']:
-#             return True
-#         if new_info['inputs'] != old_info['inputs']:
-#             return True
-#         if not set(old_info['labels']).issubset(new_info['labels']):
-#             return True
+def config_essential_data_has_changed(new_config_str, old_config_str):
+    """Detect essential changes of the labeling config"""
+    new_config = parse_config(new_config_str)
+    old_config = parse_config(old_config_str)
+
+    for tag, new_info in new_config.items():
+        if tag not in old_config:
+            return True
+        old_info = old_config[tag]
+        if new_info['type'] != old_info['type']:
+            return True
+        if new_info['inputs'] != old_info['inputs']:
+            return True
+        if not set(old_info['labels']).issubset(new_info['labels']):
+            return True
 
 
 def replace_task_data_undefined_with_config_field(data, project, first_key=None):
@@ -460,73 +461,73 @@ def replace_task_data_undefined_with_config_field(data, project, first_key=None)
         del data[settings.DATA_UNDEFINED_NAME]
 
 
-# def check_control_in_config_by_regex(config_string, control_type, filter=None):
-#     """
-#     Check if control type is in config including regex filter
-#     """
-#     c = parse_config(config_string)
-#     if filter is not None and len(filter) == 0:
-#         return False
-#     if filter:
-#         c = {key: c[key] for key in filter}
-#     for control in c:
-#         item = c[control].get('regex', {})
-#         expression = control
-#         for key in item:
-#             expression = expression.replace(key, item[key])
-#         pattern = re.compile(expression)
-#         full_match = pattern.fullmatch(control_type)
-#         if full_match:
-#             return True
-#     return False
+def check_control_in_config_by_regex(config_string, control_type, filter=None):
+    """
+    Check if control type is in config including regex filter
+    """
+    c = parse_config(config_string)
+    if filter is not None and len(filter) == 0:
+        return False
+    if filter:
+        c = {key: c[key] for key in filter}
+    for control in c:
+        item = c[control].get('regex', {})
+        expression = control
+        for key in item:
+            expression = expression.replace(key, item[key])
+        pattern = re.compile(expression)
+        full_match = pattern.fullmatch(control_type)
+        if full_match:
+            return True
+    return False
 
 
-# def check_toname_in_config_by_regex(config_string, to_name, control_type=None):
-#     """
-#     Check if to_name is in config including regex filter
-#     :return: True if to_name is fullmatch to some pattern ion config
-#     """
-#     c = parse_config(config_string)
-#     if control_type:
-#         check_list = [control_type]
-#     else:
-#         check_list = list(c.keys())
-#     for control in check_list:
-#         item = c[control].get('regex', {})
-#         for to_name_item in c[control]['to_name']:
-#             expression = to_name_item
-#             for key in item:
-#                 expression = expression.replace(key, item[key])
-#             pattern = re.compile(expression)
-#             full_match = pattern.fullmatch(to_name)
-#             if full_match:
-#                 return True
-#     return False
+def check_toname_in_config_by_regex(config_string, to_name, control_type=None):
+    """
+    Check if to_name is in config including regex filter
+    :return: True if to_name is fullmatch to some pattern ion config
+    """
+    c = parse_config(config_string)
+    if control_type:
+        check_list = [control_type]
+    else:
+        check_list = list(c.keys())
+    for control in check_list:
+        item = c[control].get('regex', {})
+        for to_name_item in c[control]['to_name']:
+            expression = to_name_item
+            for key in item:
+                expression = expression.replace(key, item[key])
+            pattern = re.compile(expression)
+            full_match = pattern.fullmatch(to_name)
+            if full_match:
+                return True
+    return False
 
 
-# def get_original_fromname_by_regex(config_string, fromname):
-#     """
-#     Get from_name from config on from_name key from data after applying regex search or original fromname
-#     """
-#     c = parse_config(config_string)
-#     for control in c:
-#         item = c[control].get('regex', {})
-#         expression = control
-#         for key in item:
-#             expression = expression.replace(key, item[key])
-#         pattern = re.compile(expression)
-#         full_match = pattern.fullmatch(fromname)
-#         if full_match:
-#             return control
-#     return fromname
+def get_original_fromname_by_regex(config_string, fromname):
+    """
+    Get from_name from config on from_name key from data after applying regex search or original fromname
+    """
+    c = parse_config(config_string)
+    for control in c:
+        item = c[control].get('regex', {})
+        expression = control
+        for key in item:
+            expression = expression.replace(key, item[key])
+        pattern = re.compile(expression)
+        full_match = pattern.fullmatch(fromname)
+        if full_match:
+            return control
+    return fromname
 
 
-# def get_all_types(label_config):
-#     """
-#     Get all types from label_config
-#     """
-#     outputs = parse_config(label_config)
-#     out = []
-#     for control_name, info in outputs.items():
-#         out.append(info['type'].lower())
-#     return out
+def get_all_types(label_config):
+    """
+    Get all types from label_config
+    """
+    outputs = parse_config(label_config)
+    out = []
+    for control_name, info in outputs.items():
+        out.append(info['type'].lower())
+    return out

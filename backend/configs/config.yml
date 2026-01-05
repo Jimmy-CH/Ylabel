@@ -6,10 +6,10 @@ development:
   # MySQL 数据库配置
   database:
     engine: django.db.backends.mysql
-    name: 'label_db'
+    name: 'label_studio'
     user: 'root'
-    password: 'yTo*XingDun.456'
-    host: 10.130.18.74
+    password: '4432chen'
+    host: 127.0.0.1
     port: 3306
     options:
       init_command: "SET sql_mode='STRICT_TRANS_TABLES'"

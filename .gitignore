@@ -161,3 +161,4 @@ cython_debug/
 
 migrations/
 *.sqlite3
+logs/

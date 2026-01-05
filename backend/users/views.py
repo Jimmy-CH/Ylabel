@@ -3,6 +3,7 @@
 import logging
 from urllib.parse import quote
 
+from core.feature_flags import flag_set
 from core.middleware import enforce_csrf_checks
 from core.utils.common import load_func
 from django.conf import settings
@@ -44,12 +45,10 @@ def user_signup(request):
 
     # checks if the URL is a safe redirection.
     if not next_page or not url_has_allowed_host_and_scheme(url=next_page, allowed_hosts=request.get_host()):
-        # if flag_set('fflag_all_feat_dia_1777_ls_homepage_short', user):
-        #     next_page = reverse('main')
-        # else:
-        #     next_page = reverse('projects:project-index')
-        # 新主页
-        next_page = reverse('main')
+        if flag_set('fflag_all_feat_dia_1777_ls_homepage_short', user):
+            next_page = reverse('main')
+        else:
+            next_page = reverse('projects:project-index')
 
     user_form = forms.UserSignupForm()
     organization_form = OrganizationSignupForm()
@@ -75,19 +74,19 @@ def user_signup(request):
             if redirect_response:
                 return redirect_response
 
-    # if flag_set('fflag_feat_front_lsdv_e_297_increase_oss_to_enterprise_adoption_short'):
-    #     return render(
-    #         request,
-    #         'users/new-ui/user_signup.html',
-    #         {
-    #             'user_form': user_form,
-    #             'organization_form': organization_form,
-    #             'next': quote(next_page),
-    #             'token': token,
-    #             'found_us_options': forms.FOUND_US_OPTIONS,
-    #             'elaborate': forms.FOUND_US_ELABORATE,
-    #         },
-    #     )
+    if flag_set('fflag_feat_front_lsdv_e_297_increase_oss_to_enterprise_adoption_short'):
+        return render(
+            request,
+            'users/new-ui/user_signup.html',
+            {
+                'user_form': user_form,
+                'organization_form': organization_form,
+                'next': quote(next_page),
+                'token': token,
+                'found_us_options': forms.FOUND_US_OPTIONS,
+                'elaborate': forms.FOUND_US_ELABORATE,
+            },
+        )
 
     return render(
         request,
@@ -109,11 +108,10 @@ def user_login(request):
 
     # checks if the URL is a safe redirection.
     if not next_page or not url_has_allowed_host_and_scheme(url=next_page, allowed_hosts=request.get_host()):
-        # if flag_set('fflag_all_feat_dia_1777_ls_homepage_short', user):
-        #     next_page = reverse('main')
-        # else:
-        #     next_page = reverse('projects:project-index')
-        next_page = reverse('main')
+        if flag_set('fflag_all_feat_dia_1777_ls_homepage_short', user):
+            next_page = reverse('main')
+        else:
+            next_page = reverse('projects:project-index')
 
     login_form = load_func(settings.USER_LOGIN_FORM)
     form = login_form()
@@ -137,8 +135,8 @@ def user_login(request):
             user.save(update_fields=['active_organization'])
             return redirect(next_page)
 
-    # if flag_set('fflag_feat_front_lsdv_e_297_increase_oss_to_enterprise_adoption_short'):
-    #     return render(request, 'users/new-ui/user_login.html', {'form': form, 'next': quote(next_page)})
+    if flag_set('fflag_feat_front_lsdv_e_297_increase_oss_to_enterprise_adoption_short'):
+        return render(request, 'users/new-ui/user_login.html', {'form': form, 'next': quote(next_page)})
 
     return render(request, 'users/user_login.html', {'form': form, 'next': quote(next_page)})
 

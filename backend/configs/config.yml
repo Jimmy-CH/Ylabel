@@ -1,0 +1,121 @@
+development:
+  # Django 核心设置
+  debug: True
+  secret_key: "django-insecure-vzc3p=c5!w&_7-*j*!e9m&p*_(=(m6y4ub!fjllb3o8w@v#3bd" # 仅用于开发！生产环境必须用环境变量
+
+  # MySQL 数据库配置
+  database:
+    engine: django.db.backends.mysql
+    name: 'label_studio'
+    user: 'root'
+    password: '4432chen'
+    host: 127.0.0.1
+    port: 3306
+    options:
+      init_command: "SET sql_mode='STRICT_TRANS_TABLES'"
+      charset: utf8mb4
+      sql_mode: "STRICT_TRANS_TABLES,NO_ZERO_DATE,NO_ZERO_IN_DATE,ERROR_FOR_DIVISION_BY_ZERO"
+
+  # Redis 配置 (用于缓存和 Celery)
+  redis:
+    host: 10.130.18.74         # Redis 服务器地址
+    port: 6379                 # Redis 默认端口
+    password: "123456"         # 如果 Redis 有密码，填在这里
+    db_cache: 0                # 用于 Django 缓存的 Redis DB
+    db_session: 11             # 用于 Django 缓存的 Redis DB
+    db_temp: 12                # 用于 Django 缓存的 Redis DB
+    db_celery_broker: 1        # 用于 Celery Broker 的 Redis DB
+    db_celery_backend: 2       # 用于 Celery Result Backend 的 Redis DB
+    db_channels: 3
+
+  # Celery 配置
+  celery:
+    broker_url: "redis://:{password}@{host}:{port}/{db}" # 模板，将被下面的值填充
+    result_backend: "redis://:{password}@{host}:{port}/{db}"
+    task_always_eager: false   # False 表示任务异步执行 (需要启动 Celery Worker)
+    task_serializer: json
+    result_serializer: json
+    accept_content: [json]
+    timezone: Asia/Shanghai    # 设置时区
+    enable_utc: true
+
+# 生产环境模板
+production:
+  debug: false
+  secret_key: "django-insecure-vzc3p=c5!w&_7-*j*!e9m&p*_(=(m6y4ub!fjllb3o8w@v#3bd"
+
+  # MySQL 数据库配置
+  database:
+    engine: django.db.backends.mysql
+    name: 'ms_db'
+    user: 'root'
+    password: 'yTo*XingDun.456'
+    host: 10.130.18.74
+    port: 3306
+    options:
+      init_command: "SET sql_mode='STRICT_TRANS_TABLES'"
+      charset: utf8mb4
+      sql_mode: "STRICT_TRANS_TABLES,NO_ZERO_DATE,NO_ZERO_IN_DATE,ERROR_FOR_DIVISION_BY_ZERO"
+
+  # Redis 配置 (用于缓存和 Celery)
+  redis:
+    host: 10.130.18.74         # Redis 服务器地址
+    port: 6379                 # Redis 默认端口
+    password: "123456"         # 如果 Redis 有密码，填在这里
+    db_cache: 0                # 用于 Django 缓存的 Redis DB
+    db_session: 11             # 用于 Django 缓存的 Redis DB
+    db_temp: 12                # 用于 Django 缓存的 Redis DB
+    db_celery_broker: 1        # 用于 Celery Broker 的 Redis DB
+    db_celery_backend: 2       # 用于 Celery Result Backend 的 Redis DB
+    db_channels: 3
+
+  # Celery 配置
+  celery:
+    broker_url: "redis://:{password}@{host}:{port}/{db}" # 模板，将被下面的值填充
+    result_backend: "redis://:{password}@{host}:{port}/{db}"
+    task_always_eager: false   # False 表示任务异步执行 (需要启动 Celery Worker)
+    task_serializer: json
+    result_serializer: json
+    accept_content: [json]
+    timezone: Asia/Shanghai    # 设置时区
+    enable_utc: true
+
+
+# 本地开发配置
+local:
+  # Django 核心设置
+  debug: True
+  secret_key: "django-insecure-vzc3p=c5!w&_7-*j*!e9m&p*_(=(m6y4ub!fjllb3o8w@v#3bd" # 仅用于开发！生产环境必须用环境变量
+
+  # MySQL 数据库配置
+  database:
+    engine: django.db.backends.mysql
+    name: 'manager'
+    user: 'root'
+    password: '1234'
+    host: 127.0.0.1
+    port: 3306
+    options:
+      init_command: "SET sql_mode='STRICT_TRANS_TABLES'"
+      charset: utf8mb4
+      sql_mode: "STRICT_TRANS_TABLES,NO_ZERO_DATE,NO_ZERO_IN_DATE,ERROR_FOR_DIVISION_BY_ZERO"
+
+  # Redis 配置 (用于缓存和 Celery)
+  redis:
+    host: 127.0.0.1            # Redis 服务器地址
+    port: 6379                 # Redis 默认端口
+    password: ""               # 如果 Redis 有密码，填在这里
+    db_cache: 0                # 用于 Django 缓存的 Redis DB
+    db_celery_broker: 1        # 用于 Celery Broker 的 Redis DB
+    db_celery_backend: 2       # 用于 Celery Result Backend 的 Redis DB
+
+  # Celery 配置
+  celery:
+    broker_url: "redis://:{password}@{host}:{port}/{db}" # 模板，将被下面的值填充
+    result_backend: "redis://:{password}@{host}:{port}/{db}"
+    task_always_eager: false   # False 表示任务异步执行 (需要启动 Celery Worker)
+    task_serializer: json
+    result_serializer: json
+    accept_content: [json]
+    timezone: Asia/Shanghai    # 设置时区
+    enable_utc: true

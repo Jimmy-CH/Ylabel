@@ -13,8 +13,7 @@ import numpy as np
 import pandas as pd
 import xmljson
 from django.conf import settings
-# from label_studio_sdk._extensions.label_studio_tools.core import label_config
-from label_studio_converter.utils import parse_config
+from label_studio_sdk._extensions.label_studio_tools.core import label_config
 from rest_framework.exceptions import ValidationError
 
 from core.utils.io import find_file
@@ -34,23 +33,23 @@ with open(_LABEL_CONFIG_SCHEMA) as f:
     _LABEL_CONFIG_SCHEMA_DATA = json.load(f)
 
 
-# def parse_config(config_string):
-#     """
-#     :param config_string: Label config string
-#     :return: structured config of the form:
-#     {
-#         "<ControlTag>.name": {
-#             "type": "ControlTag",
-#             "to_name": ["<ObjectTag1>.name", "<ObjectTag2>.name"],
-#             "inputs: [
-#                 {"type": "ObjectTag1", "value": "<ObjectTag1>.value"},
-#                 {"type": "ObjectTag2", "value": "<ObjectTag2>.value"}
-#             ],
-#             "labels": ["Label1", "Label2", "Label3"] // taken from "alias" if exists or "value"
-#     }
-#     """
-#     logger.warning('Using deprecated method - switch to label_studio.tools.label_config.parse_config!')
-#     return label_config.parse_config(config_string)
+def parse_config(config_string):
+    """
+    :param config_string: Label config string
+    :return: structured config of the form:
+    {
+        "<ControlTag>.name": {
+            "type": "ControlTag",
+            "to_name": ["<ObjectTag1>.name", "<ObjectTag2>.name"],
+            "inputs: [
+                {"type": "ObjectTag1", "value": "<ObjectTag1>.value"},
+                {"type": "ObjectTag2", "value": "<ObjectTag2>.value"}
+            ],
+            "labels": ["Label1", "Label2", "Label3"] // taken from "alias" if exists or "value"
+    }
+    """
+    logger.warning('Using deprecated method - switch to label_studio.tools.label_config.parse_config!')
+    return label_config.parse_config(config_string)
 
 
 def _fix_choices(config):

@@ -14,7 +14,6 @@ import pandas as pd
 import xmljson
 from django.conf import settings
 from label_studio_sdk._extensions.label_studio_tools.core import label_config
-# from label_studio_converter.utils import parse_config
 from rest_framework.exceptions import ValidationError
 
 from core.utils.io import find_file

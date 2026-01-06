@@ -230,9 +230,9 @@ INSTALLED_APPS = [
     'ml',
     'webhooks',
     'labels_manager',
-    # 'ml_models',
-    # 'ml_model_providers',
-    # 'jwt_auth',
+    'ml_models',
+    'ml_model_providers',
+    'jwt_auth',
     # 'session_policy',
 ]
 
@@ -252,13 +252,13 @@ MIDDLEWARE = [
     'core.middleware.ContextLogMiddleware',
     'core.middleware.DatabaseIsLockedRetryMiddleware',
     'core.current_request.ThreadLocalMiddleware',
-    # 'jwt_auth.middleware.JWTAuthenticationMiddleware',
+    'jwt_auth.middleware.JWTAuthenticationMiddleware',
 ]
 
 REST_FRAMEWORK = {
     'DEFAULT_FILTER_BACKENDS': ['django_filters.rest_framework.DjangoFilterBackend'],
     'DEFAULT_AUTHENTICATION_CLASSES': (
-        # 'jwt_auth.auth.TokenAuthenticationPhaseout',
+        'jwt_auth.auth.TokenAuthenticationPhaseout',
         'rest_framework.authentication.SessionAuthentication',
     ),
     'DEFAULT_PERMISSION_CLASSES': [

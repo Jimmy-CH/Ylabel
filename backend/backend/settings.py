@@ -67,8 +67,9 @@ INSTALLED_APPS = [
     'organizations',
     # 'projects',
     # 'tasks',
-    'fsm',
-    # 'labels_manager',
+    # 'fsm',
+    'labels_manager',
+    'webhooks',
 ]
 
 MIDDLEWARE = [

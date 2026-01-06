@@ -68,6 +68,7 @@ INSTALLED_APPS = [
     # 'projects',
     # 'tasks',
     'fsm',
+    # 'labels_manager',
 ]
 
 MIDDLEWARE = [

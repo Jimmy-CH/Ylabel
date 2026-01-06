@@ -71,6 +71,7 @@ INSTALLED_APPS = [
     'labels_manager',
     # 'webhooks',
     'data_import',
+    # 'data_manager',
 ]
 
 MIDDLEWARE = [

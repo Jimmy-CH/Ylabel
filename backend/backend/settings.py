@@ -9,10 +9,10 @@ from django.core.exceptions import ImproperlyConfigured
 
 from core.utils.params import get_bool_env, get_env, get_env_list, has_env
 
-formatter = 'standard'
-JSON_LOG = get_bool_env('JSON_LOG', False)
-if JSON_LOG:
-    formatter = 'json'
+DEBUG = get_bool_env('DEBUG', True)
+DEFAULT_FORMATTER = 'json' if get_bool_env('JSON_LOG', False) else 'standard'
+DEFAULT_LOG_LEVEL = 'DEBUG' if DEBUG else 'INFO'
+LOG_LEVEL = os.getenv('LOG_LEVEL', DEFAULT_LOG_LEVEL).upper()
 
 LOGGING = {
     'version': 1,
@@ -30,37 +30,33 @@ LOGGING = {
     'handlers': {
         'console': {
             'class': 'logging.StreamHandler',
-            'formatter': formatter,
+            'formatter': DEFAULT_FORMATTER,
         },
     },
     'root': {
         'handlers': ['console'],
-        'level': os.environ.get('LOG_LEVEL', 'DEBUG'),
+        'level': LOG_LEVEL,
     },
     'loggers': {
         'pykwalify': {'level': 'ERROR', 'propagate': False},
         'tavern': {'level': 'ERROR', 'propagate': False},
+        'faker': {'level': 'WARNING', 'propagate': False},
         'asyncio': {'level': 'WARNING'},
         'rules': {'level': 'WARNING'},
+        'ddtrace': {'level': 'WARNING'},
+        'ldclient.util': {'level': 'ERROR'},
         'django': {
             'handlers': ['console'],
             # 'propagate': True,
         },
-        'django_auth_ldap': {'level': os.environ.get('LOG_LEVEL', 'DEBUG')},
+        'django_auth_ldap': {'level': LOG_LEVEL},
         'rq.worker': {
             'handlers': ['console'],
-            'level': os.environ.get('LOG_LEVEL', 'INFO'),
+            'level': 'INFO' if DEBUG else 'WARNING',
         },
-        'ddtrace': {
-            'handlers': ['console'],
-            'level': 'WARNING',
-        },
-        'ldclient.util': {
-            'handlers': ['console'],
-            'level': 'ERROR',
-        },
-        'faker': {
-            'level': 'WARNING',
+        'django.db.backends': {
+            'handlers': ['console'] if DEBUG else [],  # 生产环境完全关闭 console 输出
+            'level': 'INFO' if DEBUG else 'WARNING',
             'propagate': False,
         },
     },
@@ -114,7 +110,6 @@ if DOMAIN_FROM_REQUEST:
 INTERNAL_PORT = '8080'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = get_bool_env('DEBUG', True)
 DEBUG_MODAL_EXCEPTIONS = get_bool_env('DEBUG_MODAL_EXCEPTIONS', True)
 
 # Whether to verify SSL certs when making external requests, eg in the uploader

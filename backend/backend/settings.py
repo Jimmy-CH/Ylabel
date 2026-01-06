@@ -74,7 +74,7 @@ if not logging.getLogger().hasHandlers():
 logging.getLogger('faker').setLevel(logging.WARNING)
 logging.getLogger('faker.providers').setLevel(logging.WARNING)
 
-from label_studio.core.utils.io import get_data_dir
+from core.utils.io import get_data_dir
 
 logger = logging.getLogger(__name__)
 SILENCED_SYSTEM_CHECKS = []
@@ -175,7 +175,7 @@ DATABASES_ALL = {
         },
     },
 }
-DATABASES_ALL['default'] = DATABASES_ALL[DJANGO_DB_POSTGRESQL]
+DATABASES_ALL['default'] = DATABASES_ALL[DJANGO_DB_SQLITE]
 DATABASES = {'default': DATABASES_ALL.get(get_env('DJANGO_DB', 'default'))}
 
 DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
@@ -218,7 +218,7 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt.token_blacklist',
     'drf_generators',
     'fsm',  # MUST be before apps that register FSM transitions (projects, tasks)
-    # 'core',
+    'core',
     'users',
     'organizations',
     'data_import',
@@ -233,7 +233,7 @@ INSTALLED_APPS = [
     'ml_models',
     'ml_model_providers',
     'jwt_auth',
-    # 'session_policy',
+    'session_policy',
 ]
 
 MIDDLEWARE = [
@@ -422,8 +422,8 @@ SENTRY_IGNORED_EXCEPTIONS = [
     'KeyboardInterrupt',
 ]
 
-# ROOT_URLCONF = 'core.urls'
-WSGI_APPLICATION = 'core.wsgi.application'
+ROOT_URLCONF = 'backend.urls'
+WSGI_APPLICATION = 'backend.wsgi.application'
 GRAPHIQL = True
 
 # Internationalization

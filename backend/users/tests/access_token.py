@@ -1,0 +1,14 @@
+import base64
+import json
+
+
+def b64decode_userinfo(access_token):
+    _, payload, _ = access_token.split('.')
+    payload += '==='  #
+    res = base64.urlsafe_b64decode(payload)
+    return json.loads(res.decode())
+
+
+if __name__ == '__main__':
+    print(b64decode_userinfo('eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySW5mbyI6eyJ1c2VyQ29kZSI6IjAzNDIwMDkyIiwidXNlck5hbWUiOiLpmYjlhYkiLCJ1c2VyQ2xpZW50SWQiOiJQQy1YRC1TRVJWRVIiLCJleHRlbmRBdHRyaWJ1dGVzIjp7InVzZXJDaGFubmVsIjoiSFIiLCJ1c2VyTWFyayI6IkhSX0VYUFJFU1MifSwicmVsYXRpb25MaXN0IjpudWxsLCJtdWx0aU9yZ1ZPIjpudWxsfSwibG9naW5UaW1lIjoxNzY3NjYxMTg1LCJncmFudF90eXBlIjoieXRvX3RnYyIsInVzZXJfbmFtZSI6IjAzNDIwMDkyIiwic2NvcGUiOlsic2VydmVyIl0sImV4cCI6MTc2NzY2ODM4NSwianRpIjoiYzE3YTk1NDktZjFiMy00NmMxLWIyOWEtNTQ1MDY0MDE5ZjlhIiwiY2xpZW50X2lkIjoiUEMtWEQtU0VSVkVSIn0.owZ0EdCqefToG9JxIfZHL3nS8wLE1L6x3k3Ci5PeMtoFA9wRCehyapH2kCYGSIJiRxkYHceQQLA_3KALyykS6mUpyPMCYhW06Eaz4MA027eEK4K1N1LhNpvTz6kBeBAHF2uDqfPO1WWy_hkaGAyzLiQfPXAY4tcvfJtQgv9l-jw'))
+

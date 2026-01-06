@@ -218,7 +218,7 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt.token_blacklist',
     'drf_generators',
     'fsm',  # MUST be before apps that register FSM transitions (projects, tasks)
-    'core',
+    # 'core',
     'users',
     'organizations',
     'data_import',
@@ -252,17 +252,17 @@ MIDDLEWARE = [
     'core.middleware.ContextLogMiddleware',
     'core.middleware.DatabaseIsLockedRetryMiddleware',
     'core.current_request.ThreadLocalMiddleware',
-    'jwt_auth.middleware.JWTAuthenticationMiddleware',
+    # 'jwt_auth.middleware.JWTAuthenticationMiddleware',
 ]
 
 REST_FRAMEWORK = {
     'DEFAULT_FILTER_BACKENDS': ['django_filters.rest_framework.DjangoFilterBackend'],
     'DEFAULT_AUTHENTICATION_CLASSES': (
-        'jwt_auth.auth.TokenAuthenticationPhaseout',
+        # 'jwt_auth.auth.TokenAuthenticationPhaseout',
         'rest_framework.authentication.SessionAuthentication',
     ),
     'DEFAULT_PERMISSION_CLASSES': [
-        'core.api_permissions.HasObjectPermission',
+        # 'core.api_permissions.HasObjectPermission',
         'rest_framework.permissions.IsAuthenticated',
     ],
     'EXCEPTION_HANDLER': 'core.utils.common.custom_exception_handler',
@@ -336,7 +336,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
-                'core.context_processors.settings',
+                # 'core.context_processors.settings',
             ],
             'builtins': ['django.templatetags.i18n'],
         },
@@ -422,7 +422,7 @@ SENTRY_IGNORED_EXCEPTIONS = [
     'KeyboardInterrupt',
 ]
 
-ROOT_URLCONF = 'core.urls'
+# ROOT_URLCONF = 'core.urls'
 WSGI_APPLICATION = 'core.wsgi.application'
 GRAPHIQL = True
 
@@ -928,3 +928,7 @@ FSM_INFERENCE_FUNCTION = 'fsm.state_inference._get_or_infer_state'
 # Used for async migrations. In LSE this is set to a real queue name, including here so we
 # can use settings.SERVICE_QUEUE_NAME in async migrations in LSO
 SERVICE_QUEUE_NAME = get_env('SERVICE_QUEUE_NAME', 'default')
+
+# 新增配置
+SECRET_KEY = '7#33_!ae+t7eg1n#5c0+xa811^a5d!+a0=b8a!*ha04m9wve_('
+

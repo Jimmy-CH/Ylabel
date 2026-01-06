@@ -1,121 +1,145 @@
-development:
-  # Django 核心设置
-  debug: True
-  secret_key: "django-insecure-vzc3p=c5!w&_7-*j*!e9m&p*_(=(m6y4ub!fjllb3o8w@v#3bd" # 仅用于开发！生产环境必须用环境变量
+# config.yml - Label Studio 配置文件模板
+# 说明：此文件中的配置项将覆盖同名环境变量（若存在）
 
-  # MySQL 数据库配置
-  database:
-    engine: django.db.backends.mysql
-    name: 'label_studio'
-    user: 'root'
-    password: '4432chen'
-    host: 127.0.0.1
-    port: 3306
-    options:
-      init_command: "SET sql_mode='STRICT_TRANS_TABLES'"
-      charset: utf8mb4
-      sql_mode: "STRICT_TRANS_TABLES,NO_ZERO_DATE,NO_ZERO_IN_DATE,ERROR_FOR_DIVISION_BY_ZERO"
+# 基础设置
+debug: true
+allowed_hosts:
+  - "*"
+secret_key: "7#33_!ae+t7eg1n#5c0+xa811^a5d!+a0=b8a!*ha04m9wve_("
 
-  # Redis 配置 (用于缓存和 Celery)
-  redis:
-    host: 10.130.18.74         # Redis 服务器地址
-    port: 6379                 # Redis 默认端口
-    password: "123456"         # 如果 Redis 有密码，填在这里
-    db_cache: 0                # 用于 Django 缓存的 Redis DB
-    db_session: 11             # 用于 Django 缓存的 Redis DB
-    db_temp: 12                # 用于 Django 缓存的 Redis DB
-    db_celery_broker: 1        # 用于 Celery Broker 的 Redis DB
-    db_celery_backend: 2       # 用于 Celery Result Backend 的 Redis DB
-    db_channels: 3
+# 主机与前端
+host: "http://localhost:8080"
+frontend_hostname: "http://localhost:8010"
+domain_from_request: false
+frontend_hmr: false
 
-  # Celery 配置
-  celery:
-    broker_url: "redis://:{password}@{host}:{port}/{db}" # 模板，将被下面的值填充
-    result_backend: "redis://:{password}@{host}:{port}/{db}"
-    task_always_eager: false   # False 表示任务异步执行 (需要启动 Celery Worker)
-    task_serializer: json
-    result_serializer: json
-    accept_content: [json]
-    timezone: Asia/Shanghai    # 设置时区
-    enable_utc: true
+# 日志
+log_level: "INFO"
+json_log: false
 
-# 生产环境模板
-production:
-  debug: false
-  secret_key: "django-insecure-vzc3p=c5!w&_7-*j*!e9m&p*_(=(m6y4ub!fjllb3o8w@v#3bd"
+# 数据目录
+base_data_dir: "/path/to/your/data"
 
-  # MySQL 数据库配置
-  database:
-    engine: django.db.backends.mysql
-    name: 'ms_db'
-    user: 'root'
-    password: 'yTo*XingDun.456'
-    host: 10.130.18.74
-    port: 3306
-    options:
-      init_command: "SET sql_mode='STRICT_TRANS_TABLES'"
-      charset: utf8mb4
-      sql_mode: "STRICT_TRANS_TABLES,NO_ZERO_DATE,NO_ZERO_IN_DATE,ERROR_FOR_DIVISION_BY_ZERO"
+# 数据库
+django_db: "sqlite"  # 可选: sqlite, postgresql, mysql
+database_name: "/path/to/your/data/label_studio.sqlite3"
 
-  # Redis 配置 (用于缓存和 Celery)
-  redis:
-    host: 10.130.18.74         # Redis 服务器地址
-    port: 6379                 # Redis 默认端口
-    password: "123456"         # 如果 Redis 有密码，填在这里
-    db_cache: 0                # 用于 Django 缓存的 Redis DB
-    db_session: 11             # 用于 Django 缓存的 Redis DB
-    db_temp: 12                # 用于 Django 缓存的 Redis DB
-    db_celery_broker: 1        # 用于 Celery Broker 的 Redis DB
-    db_celery_backend: 2       # 用于 Celery Result Backend 的 Redis DB
-    db_channels: 3
+# PostgreSQL (当 django_db == postgresql 时生效)
+postgre_user: "postgres"
+postgre_password: "postgres"
+postgre_name: "postgres"
+postgre_host: "localhost"
+postgre_port: 5432
 
-  # Celery 配置
-  celery:
-    broker_url: "redis://:{password}@{host}:{port}/{db}" # 模板，将被下面的值填充
-    result_backend: "redis://:{password}@{host}:{port}/{db}"
-    task_always_eager: false   # False 表示任务异步执行 (需要启动 Celery Worker)
-    task_serializer: json
-    result_serializer: json
-    accept_content: [json]
-    timezone: Asia/Shanghai    # 设置时区
-    enable_utc: true
+# MySQL (当 django_db == mysql 时生效)
+mysql_user: "root"
+mysql_password: ""
+mysql_name: "labelstudio"
+mysql_host: "localhost"
+mysql_port: 3306
 
+# 安全
+session_cookie_secure: false
+csrf_cookie_secure: false
+session_cookie_samesite: "Lax"
+csrf_cookie_samesite: "Lax"
+csrf_trusted_origins: []
 
-# 本地开发配置
-local:
-  # Django 核心设置
-  debug: True
-  secret_key: "django-insecure-vzc3p=c5!w&_7-*j*!e9m&p*_(=(m6y4ub!fjllb3o8w@v#3bd" # 仅用于开发！生产环境必须用环境变量
+# CORS
+cors_allow_all_origins: true
+# cors_allowed_origins:
+#   - "https://your-frontend.com"
+# cors_allowed_origin_regexes:
+#   - "https://.*\.yourdomain\.com"
 
-  # MySQL 数据库配置
-  database:
-    engine: django.db.backends.mysql
-    name: 'manager'
-    user: 'root'
-    password: '1234'
-    host: 127.0.0.1
-    port: 3306
-    options:
-      init_command: "SET sql_mode='STRICT_TRANS_TABLES'"
-      charset: utf8mb4
-      sql_mode: "STRICT_TRANS_TABLES,NO_ZERO_DATE,NO_ZERO_IN_DATE,ERROR_FOR_DIVISION_BY_ZERO"
+# 文件上传限制
+data_upload_max_memory_size: 262144000  # 250 MB
+data_upload_max_number_files: 100
 
-  # Redis 配置 (用于缓存和 Celery)
-  redis:
-    host: 127.0.0.1            # Redis 服务器地址
-    port: 6379                 # Redis 默认端口
-    password: ""               # 如果 Redis 有密码，填在这里
-    db_cache: 0                # 用于 Django 缓存的 Redis DB
-    db_celery_broker: 1        # 用于 Celery Broker 的 Redis DB
-    db_celery_backend: 2       # 用于 Celery Result Backend 的 Redis DB
+# 邮件
+from_email: "Label Studio <hello@labelstud.io>"
+email_backend: "django.core.mail.backends.dummy.EmailBackend"
 
-  # Celery 配置
-  celery:
-    broker_url: "redis://:{password}@{host}:{port}/{db}" # 模板，将被下面的值填充
-    result_backend: "redis://:{password}@{host}:{port}/{db}"
-    task_always_eager: false   # False 表示任务异步执行 (需要启动 Celery Worker)
-    task_serializer: json
-    result_serializer: json
-    accept_content: [json]
-    timezone: Asia/Shanghai    # 设置时区
-    enable_utc: true
+# 会话超时（秒）
+max_session_age: 1209600        # 14 天
+max_time_between_activity: 432000  # 5 天
+inactivity_session_timeout_enabled: true
+
+# RQ 任务队列
+rq_failed_job_ttl: 2592000  # 30 天
+
+# Webhook
+webhook_timeout: 1.0
+webhook_batch_size: 5000
+
+# 特性开关
+collect_analytics: true
+experimental_features: false
+svg_security_cleanup: false
+ml_block_local_ip: false
+enable_csp: true
+ls_csp_report_only: true
+# ls_csp_report_uri: "https://your-csp-endpoint.com/report"
+
+# 云存储（MinIO/S3/Azure/GCS）
+# minio_storage_endpoint: "http://minio:9000"
+# minio_storage_access_key: "minioadmin"
+# minio_storage_secret_key: "minioadmin"
+# minio_storage_bucket_name: "label-studio"
+
+# 或使用通用 S3 配置
+# storage_type: "s3"
+# storage_aws_access_key_id: "..."
+# storage_aws_secret_access_key: "..."
+# storage_aws_bucket_name: "my-bucket"
+# storage_aws_region_name: "us-east-1"
+# storage_aws_endpoint_url: "https://s3.us-east-1.amazonaws.com"
+# storage_aws_folder: ""  # 可选前缀
+
+# Azure
+# storage_type: "azure"
+# storage_azure_account_name: "..."
+# storage_azure_account_key: "..."
+# storage_azure_container_name: "my-container"
+# storage_azure_folder: ""
+
+# GCS
+# storage_type: "gcs"
+# storage_gcs_project_id: "my-project"
+# storage_gcs_bucket_name: "my-bucket"
+# storage_gcs_folder: ""
+# gcs_cloud_storage_force_default_credentials: false
+
+# Sentry 错误监控
+sentry_dsn: ""
+sentry_rate: 0.02
+sentry_environment: "stage.opensource"
+frontend_sentry_dsn: ""
+frontend_sentry_rate: 0.01
+frontend_sentry_environment: "stage.opensource"
+
+# 其他
+verify_ssl_certs: true
+windows_sqlite_binary_host_prefix: "https://www.sqlite.org/2023/"
+latest_version_check: true
+allow_organization_webhooks: false
+public_api_docs: false
+
+# 用户与认证
+disable_signup_without_link: false
+use_username_for_login: false
+auth_password_min_length: 8
+auth_password_max_length: 128
+
+# 导出与导入
+use_nginx_for_export_downloads: false
+use_nginx_for_uploads: true
+sync_on_target_storage_creation: true
+allow_import_tasks_with_unknown_emails: false
+
+# 功能标志（Feature Flags）
+feature_flags_api_key: "any key"
+feature_flags_offline: true
+feature_flags_from_file: false
+feature_flags_file: "feature_flags.json"
+feature_flags_default_value: false

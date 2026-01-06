@@ -162,8 +162,8 @@ DATABASES_ALL = {
     DJANGO_DB_MYSQL: {
         'ENGINE': 'django.db.backends.mysql',
         'USER': get_env('MYSQL_USER', 'root'),
-        'PASSWORD': get_env('MYSQL_PASSWORD', ''),
-        'NAME': get_env('MYSQL_NAME', 'labelstudio'),
+        'PASSWORD': get_env('MYSQL_PASSWORD', '4432chen'),
+        'NAME': get_env('MYSQL_NAME', 'label_studio'),
         'HOST': get_env('MYSQL_HOST', 'localhost'),
         'PORT': int(get_env('MYSQL_PORT', '3306')),
     },
@@ -175,7 +175,7 @@ DATABASES_ALL = {
         },
     },
 }
-DATABASES_ALL['default'] = DATABASES_ALL[DJANGO_DB_SQLITE]
+DATABASES_ALL['default'] = DATABASES_ALL[DJANGO_DB_MYSQL]
 DATABASES = {'default': DATABASES_ALL.get(get_env('DJANGO_DB', 'default'))}
 
 DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'

@@ -10,7 +10,8 @@ class Label(models.Model):
         settings.AUTH_USER_MODEL, related_name='labels', on_delete=models.CASCADE, help_text='User who made this label'
     )
     value = models.JSONField('value', null=False, help_text='Label value')
-    title = models.CharField(_('Title'), max_length=2048, help_text='Label title')
+    # title = models.CharField(_('Title'), max_length=2048, help_text='Label title')
+    title = models.CharField(_('Title'), max_length=190, help_text='Label title')   # 解决字段问题
     description = models.TextField(_('Description'), help_text='Label description', blank=True, null=True)
     approved_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,

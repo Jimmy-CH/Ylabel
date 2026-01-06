@@ -72,6 +72,8 @@ INSTALLED_APPS = [
     # 'webhooks',
     'data_import',
     # 'data_manager',
+    # 'io_storages',
+    # 'data_export',
 ]
 
 MIDDLEWARE = [

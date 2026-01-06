@@ -73,7 +73,8 @@ INSTALLED_APPS = [
     'data_import',
     # 'data_manager',
     # 'io_storages',
-    # 'data_export',
+    'data_export',
+    'ml',
 ]
 
 MIDDLEWARE = [

@@ -10,4 +10,5 @@ urlpatterns = [
     path('api/token/refresh/', views.DecoratedTokenRefreshView.as_view(), name='token_refresh'),
     path('api/token/blacklist/', views.LSTokenBlacklistView.as_view(), name='token_blacklist'),
     path('api/token/rotate/', views.LSAPITokenRotateView.as_view(), name='token_rotate'),
+    path('api/token/login/', views.LoginAndGenerateAPITokenView.as_view(), name='login-token'),
 ]

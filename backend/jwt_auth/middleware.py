@@ -22,12 +22,12 @@ class JWTAuthenticationMiddleware:
             user_and_token = JWTAuthentication().authenticate(request)
             if user_and_token:
                 user = User.objects.get(pk=user_and_token[0].pk)
-                JWT_ACCESS_TOKEN_ENABLED = flag_set(
-                    'fflag__feature_develop__prompts__dia_1829_jwt_token_auth', user=user
-                )
-                if JWT_ACCESS_TOKEN_ENABLED and user.active_organization.jwt.api_tokens_enabled:
-                    request.user = user
-                    request.is_jwt = True
+                # JWT_ACCESS_TOKEN_ENABLED = flag_set(
+                #     'fflag__feature_develop__prompts__dia_1829_jwt_token_auth', user=user
+                # )
+                # if JWT_ACCESS_TOKEN_ENABLED and user.active_organization.jwt.api_tokens_enabled:
+                request.user = user
+                request.is_jwt = True
         except User.DoesNotExist:
             logger.info('JWT authentication failed: User no longer exists')
             return JsonResponse({'detail': 'User not found'}, status=status.HTTP_401_UNAUTHORIZED)

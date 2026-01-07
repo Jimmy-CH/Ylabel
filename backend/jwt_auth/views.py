@@ -3,7 +3,7 @@ from datetime import datetime
 
 from core.permissions import ViewClassPermission, all_permissions
 from django.utils.decorators import method_decorator
-from drf_spectacular.utils import extend_schema
+from drf_spectacular.utils import extend_schema, OpenApiResponse
 from jwt_auth.auth import TokenAuthenticationPhaseout
 from jwt_auth.models import LSAPIToken, TruncatedLSAPIToken
 from jwt_auth.serializers import (
@@ -23,6 +23,13 @@ from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework_simplejwt.exceptions import TokenBackendError, TokenError
 from rest_framework_simplejwt.token_blacklist.models import BlacklistedToken, OutstandingToken
 from rest_framework_simplejwt.views import TokenRefreshView, TokenViewBase
+
+from django.contrib.auth import authenticate
+from django.utils.translation import gettext_lazy as _
+from rest_framework.exceptions import ValidationError
+from rest_framework.permissions import AllowAny
+from rest_framework.views import APIView
+
 
 logger = logging.getLogger(__name__)
 
@@ -260,3 +267,51 @@ class LSAPITokenRotateView(TokenViewBase):
     def create_token(self, user):
         """Create a new token for the user. Can be overridden by child classes to use different token classes."""
         return self.token_class.for_user(user)
+
+
+class LoginAndGenerateAPITokenView(APIView):
+    """
+    用户登录并生成 Label Studio API Token（Refresh Token）
+    """
+    permission_classes = [AllowAny]
+
+    @extend_schema(
+        tags=["JWT"],
+        summary="Login and generate API token",
+        description="用户登录并生成 Label Studio API Token（Refresh Token）",
+        request={
+            'application/json': {
+                'type': 'object',
+                'properties': {
+                    'username': {'type': 'string', 'example': 'user1'},
+                    'password': {'type': 'string', 'format': 'password', 'example': 'secret'},
+                },
+                'required': ['username', 'password'],
+            }
+        },
+        responses={
+            200: LSAPITokenCreateSerializer,
+            400: OpenApiResponse(description='Bad Request (e.g., missing fields)'),
+            401: OpenApiResponse(description='Invalid credentials or account disabled'),
+        }
+    )
+    def post(self, request, *args, **kwargs):
+        username = request.data.get('username')
+        password = request.data.get('password')
+
+        if not username or not password:
+            raise ValidationError(_("Username and password are required."))
+
+        user = authenticate(username=username, password=password)
+        if not user:
+            raise ValidationError(_("Invalid credentials."))
+
+        if not user.is_active:
+            raise ValidationError(_("User account is disabled."))
+
+        # 生成 token
+        token = LSAPIToken.for_user(user)
+
+        # 序列化并返回完整 token（含签名）
+        serializer = LSAPITokenCreateSerializer(token)
+        return Response(serializer.data, status=status.HTTP_200_OK)

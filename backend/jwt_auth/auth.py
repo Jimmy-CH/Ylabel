@@ -85,7 +85,10 @@ class SSOJWTAuthentication(authentication.BaseAuthentication):
     def parser_token(self, access_token):
         """解析 JWT payload（不验证签名，仅解码）"""
         try:
-            _, payload, _ = access_token.split('.')
+            parts = access_token.split('.')
+            if len(parts) != 3:
+                raise ValueError("Token must have 3 parts")
+            _, payload, _ = parts
             # 补齐 Base64 padding
             payload += '=' * (4 - len(payload) % 4)
             decoded = base64.urlsafe_b64decode(payload)
@@ -101,7 +104,7 @@ class SSOJWTAuthentication(authentication.BaseAuthentication):
             token = auth_header.split(' ', 1)[1]
         elif auth_header.startswith('Token '):
             token = auth_header.split(' ', 1)[1]
-        elif auth_header:  # 兼容纯 token（无前缀）
+        elif auth_header:
             token = auth_header
 
         if not token:
@@ -112,10 +115,14 @@ class SSOJWTAuthentication(authentication.BaseAuthentication):
 
         try:
             payload = self.parser_token(token)
-            expired_time = payload.get('exp')
-            if time.time() > expired_time:
-                # TODO token过期
-                raise
+
+            exp = payload.get('exp')
+            if exp is not None:
+                if not isinstance(exp, (int, float)):
+                    raise exceptions.AuthenticationFailed('Invalid expiration time in token')
+                if time.time() > exp:
+                    raise exceptions.AuthenticationFailed('Token expired')
+
             user_info = payload.get('userInfo')
             if not user_info:
                 raise exceptions.AuthenticationFailed('Token missing userInfo')
@@ -133,7 +140,7 @@ class SSOJWTAuthentication(authentication.BaseAuthentication):
                     'email': f'{user_code}@yto.net.cn',
                     'first_name': user_name[:30] if user_name else user_code,
                     'is_active': True,
-                    'password': "yto1234"
+                    'password': 'yto1234',
                 }
             )
 
@@ -145,7 +152,6 @@ class SSOJWTAuthentication(authentication.BaseAuthentication):
         except exceptions.AuthenticationFailed:
             raise
         except Exception as e:
-            # 捕获其他异常（如 JSON 解析失败、base64 错误等）
             raise exceptions.AuthenticationFailed(f'Invalid token: {str(e)}')
 
     def authenticate_header(self, request):

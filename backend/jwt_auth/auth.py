@@ -1,8 +1,14 @@
+import base64
+import json
 import logging
+import jwt
 
+from django.contrib.auth import get_user_model
+from rest_framework import authentication, exceptions
+from rest_framework.request import Request
 from drf_spectacular.extensions import OpenApiAuthenticationExtension
 from rest_framework.authentication import TokenAuthentication
-from rest_framework.exceptions import AuthenticationFailed
+
 
 logger = logging.getLogger(__name__)
 
@@ -24,22 +30,6 @@ class TokenAuthenticationPhaseout(TokenAuthentication):
             user, _ = auth_result
             CurrentContext.set_user(user)
 
-        JWT_ACCESS_TOKEN_ENABLED = flag_set('fflag__feature_develop__prompts__dia_1829_jwt_token_auth')
-        if JWT_ACCESS_TOKEN_ENABLED and (auth_result is not None):
-            user, _ = auth_result
-            org = user.active_organization
-            org_id = org.id if org else None
-
-            # raise 401 if legacy API token auth disabled (i.e. this token is no longer valid)
-            if org and (not org.jwt.legacy_api_tokens_enabled):
-                raise AuthenticationFailed(
-                    'Authentication token no longer valid: legacy token authentication has been disabled for this organization'
-                )
-
-            logger.info(
-                'Legacy token authentication used',
-                extra={'user_id': user.id, 'organization_id': org_id, 'endpoint': request.path},
-            )
         return auth_result
 
 
@@ -63,3 +53,65 @@ class JWTAuthScheme(OpenApiAuthenticationExtension):
                 'prefix': 'Token ',
             },
         }
+
+
+User = get_user_model()
+
+
+class CustomJWTAuthentication(authentication.BaseAuthentication):
+    """
+    自定义 JWT Token 认证类  用于SSO统一登录认证
+    支持从 Header 或 URL 参数中获取 token
+    """
+
+    def parser_token(self, access_token):
+        _, payload, _ = access_token.split('.')
+        payload += '==='  #
+        res = base64.urlsafe_b64decode(payload)
+        return json.loads(res.decode())
+
+    def authenticate(self, request: Request):
+        auth_header = request.META.get('HTTP_AUTHORIZATION', '')
+
+        if auth_header.startswith('Bearer '):
+            token = auth_header.split(' ')[1]
+        elif auth_header.startswith('Token '):
+            token = auth_header.split(' ')[1]
+        else:
+            token = auth_header
+
+        if not token:
+            token = request.GET.get('token')
+
+        # 如果没有 token，跳过认证（交给其他认证类或权限控制）
+        if not token:
+            return None  # DRF 会继续尝试其他认证类，或最终视为匿名用户
+
+        try:
+            payload = self.parser_token(token)
+            user_info = payload.get('userInfo')
+            if not user_info:
+                raise exceptions.AuthenticationFailed('Invalid token payload')
+            user_code = user_info.get('userCode')
+            username = user_info.get('userName')
+            user = User.objects.get(username=user_code)
+            if not user.is_active:
+                raise exceptions.AuthenticationFailed('User inactive')
+
+            # 返回 (user, token) — DRF 要求的格式
+            return (user, token)
+
+        except jwt.ExpiredSignatureError:
+            raise exceptions.AuthenticationFailed('Token expired')
+        except jwt.InvalidTokenError:
+            raise exceptions.AuthenticationFailed('Invalid token')
+        except User.DoesNotExist:
+            # TODO 创建新用户
+            raise exceptions.AuthenticationFailed('User not found')
+
+    def authenticate_header(self, request):
+        """
+        返回 WWW-Authenticate 头，用于 401 响应
+        """
+        return 'Bearer realm="api"'
+

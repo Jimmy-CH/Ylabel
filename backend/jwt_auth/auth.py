@@ -72,9 +72,6 @@ class JWTAuthScheme(OpenApiAuthenticationExtension):
         }
 
 
-User = get_user_model()
-
-
 class SSOJWTAuthentication(authentication.BaseAuthentication):
     """
     自定义 JWT Token 认证类，用于 SSO 统一登录认证
@@ -94,6 +91,7 @@ class SSOJWTAuthentication(authentication.BaseAuthentication):
             decoded = base64.urlsafe_b64decode(payload)
             return json.loads(decoded.decode('utf-8'))
         except (ValueError, TypeError, UnicodeDecodeError) as e:
+            logger.error(f'Fail to parser token, error: {e}')
             raise exceptions.AuthenticationFailed('Invalid token format')
 
     def authenticate(self, request: Request):
@@ -122,7 +120,7 @@ class SSOJWTAuthentication(authentication.BaseAuthentication):
                     raise exceptions.AuthenticationFailed('Invalid expiration time in token')
                 if time.time() > exp:
                     raise exceptions.AuthenticationFailed('Token expired')
-
+            # print('payload', payload)
             user_info = payload.get('userInfo')
             if not user_info:
                 raise exceptions.AuthenticationFailed('Token missing userInfo')
@@ -133,14 +131,13 @@ class SSOJWTAuthentication(authentication.BaseAuthentication):
             if not user_code:
                 raise exceptions.AuthenticationFailed('userCode is required in token')
 
-            # 使用 get_or_create 避免并发重复创建
+            User = get_user_model()   # 内部调用
             user, created = User.objects.get_or_create(
                 username=user_code,
                 defaults={
                     'email': f'{user_code}@yto.net.cn',
                     'first_name': user_name[:30] if user_name else user_code,
-                    'is_active': True,
-                    'password': 'yto1234',
+                    'is_active': True
                 }
             )
 

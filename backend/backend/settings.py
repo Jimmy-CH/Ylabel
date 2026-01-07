@@ -253,8 +253,9 @@ MIDDLEWARE = [
 REST_FRAMEWORK = {
     'DEFAULT_FILTER_BACKENDS': ['django_filters.rest_framework.DjangoFilterBackend'],
     'DEFAULT_AUTHENTICATION_CLASSES': (
-        'jwt_auth.auth.TokenAuthenticationPhaseout',
-        'rest_framework.authentication.SessionAuthentication',
+        # 'jwt_auth.auth.TokenAuthenticationPhaseout',
+        # 'rest_framework.authentication.SessionAuthentication',
+        'jwt_auth.auth.SSOJWTAuthentication',
     ),
     'DEFAULT_PERMISSION_CLASSES': [
         # 'core.api_permissions.HasObjectPermission',
@@ -387,7 +388,8 @@ SPECTACULAR_SETTINGS = {
         'displayOperationId': True,
     },
     'AUTHENTICATION_WHITELIST': [
-        'jwt_auth.auth.TokenAuthenticationPhaseout',
+        # 'jwt_auth.auth.TokenAuthenticationPhaseout',
+        'jwt_auth.auth.SSOJWTAuthentication',
     ],
     'SERVERS': [
         {

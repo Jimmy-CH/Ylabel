@@ -240,8 +240,8 @@ class User(UserMixin, AbstractBaseUser, PermissionsMixin, UserLastActivityMixin)
         return initials
 
 
-@receiver(post_save, sender=User)
-def init_user(sender, instance=None, created=False, **kwargs):
-    if created:
-        # create token for user
-        Token.objects.create(user=instance)
+# @receiver(post_save, sender=User)
+# def init_user(sender, instance=None, created=False, **kwargs):
+#     if created:
+#         # create token for user  使用SSO的Token不需要创建
+#         Token.objects.create(user=instance)

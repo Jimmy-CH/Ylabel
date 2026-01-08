@@ -5,6 +5,7 @@ from drf_dynamic_fields import DynamicFieldsMixin
 from organizations.models import Organization, OrganizationMember
 from rest_framework import serializers
 from users.serializers import UserSerializer
+from users.models import User
 
 
 class OrganizationIdSerializer(DynamicFieldsMixin, serializers.ModelSerializer):
@@ -80,3 +81,45 @@ class OrganizationMemberSerializer(DynamicFieldsMixin, serializers.ModelSerializ
 class OrganizationInviteSerializer(serializers.Serializer):
     token = serializers.CharField(required=False)
     invite_url = serializers.CharField(required=False)
+
+
+class OrganizationCreateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Organization
+        fields = ('title', 'contact_info')  # 只暴露客户端可写的字段
+        extra_kwargs = {
+            'title': {'required': True, 'help_text': 'Name of the organization'},
+            'contact_info': {'required': False, 'help_text': 'Optional contact email'},
+        }
+
+    def create(self, validated_data):
+        user = self.context['request'].user
+        validated_data['created_by'] = user
+        org = Organization.objects.create(**validated_data)
+        org.add_user(user)  # 确保创建者是成员（根据你的模型逻辑）
+        return org
+
+
+class OrganizationMemberAddSerializer(serializers.Serializer):
+    user_id = serializers.IntegerField(
+        help_text="ID of an existing user to add to the organization"
+    )
+
+    def validate_user_id(self, value):
+        try:
+            user = User.objects.get(pk=value)
+        except User.DoesNotExist:
+            raise serializers.ValidationError("User with this ID does not exist.")
+        return user
+
+    def create(self, validated_data):
+        user = validated_data['user_id']
+        organization = self.context['organization']
+
+        # 使用 get_or_create 或 update_or_create 来处理软删除恢复
+        member, created = OrganizationMember.objects.update_or_create(
+            user=user,
+            organization=organization,
+            defaults={'deleted_at': None}
+        )
+        return member

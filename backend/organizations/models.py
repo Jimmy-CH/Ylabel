@@ -85,7 +85,7 @@ class Organization(OrganizationMixin, models.Model):
 
     users = models.ManyToManyField(settings.AUTH_USER_MODEL, related_name='organizations', through=OrganizationMember)
 
-    created_by = models.OneToOneField(
+    created_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
         null=True,

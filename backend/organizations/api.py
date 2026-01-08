@@ -18,6 +18,8 @@ from organizations.serializers import (
     OrganizationMemberListSerializer,
     OrganizationMemberSerializer,
     OrganizationSerializer,
+    OrganizationCreateSerializer,
+    OrganizationMemberAddSerializer,
 )
 from projects.models import Project
 from rest_framework import generics, status
@@ -55,6 +57,34 @@ HasObjectPermission = load_func(settings.MEMBER_PERM)
         },
     ),
 )
+@method_decorator(
+    name='post',
+    decorator=extend_schema(
+        tags=['Organizations'],
+        summary='Create a new organization',
+        description="""
+        Create a new organization. You will be automatically set as the creator and added as an active member.
+
+        - `title` is required and must be unique per your account.
+        - `contact_info` is optional (email format).
+        - The system auto-generates a unique `token` for invite URLs.
+        """,
+        request=OrganizationCreateSerializer,
+        responses={
+            201: OpenApiResponse(
+                response=OrganizationIdSerializer,
+                description="Organization created successfully."
+            ),
+            400: OpenApiResponse(description="Bad request (e.g., missing title, invalid email)."),
+            403: OpenApiResponse(description="You don't have permission to create organizations."),
+        },
+        extensions={
+            'x-fern-sdk-group-name': 'organizations',
+            'x-fern-sdk-method-name': 'create',
+            'x-fern-audiences': ['public'],
+        },
+    ),
+)
 class OrganizationListAPI(generics.ListCreateAPIView):
     queryset = Organization.objects.all()
     parser_classes = (JSONParser, FormParser, MultiPartParser)
@@ -65,17 +95,27 @@ class OrganizationListAPI(generics.ListCreateAPIView):
         PATCH=all_permissions.organizations_change,
         DELETE=all_permissions.organizations_change,
     )
-    serializer_class = OrganizationIdSerializer
+    # serializer_class = OrganizationIdSerializer
+
+    def get_serializer_class(self):
+        if self.request.method == 'POST':
+            return OrganizationCreateSerializer  # 安全的创建序列化器
+        return OrganizationIdSerializer
 
     def filter_queryset(self, queryset):
-        return queryset.filter(
-            organizationmember__in=self.request.user.om_through.filter(deleted_at__isnull=True)
-        ).distinct()
+        # 只返回用户未被 soft-delete 的组织
+        user = self.request.user
+        active_member_ids = OrganizationMember.objects.filter(
+            user=user,
+            deleted_at__isnull=True
+        ).values_list('organization_id', flat=True)
+
+        return queryset.filter(id__in=active_member_ids)
 
     def get(self, request, *args, **kwargs):
         return super(OrganizationListAPI, self).get(request, *args, **kwargs)
 
-    @extend_schema(exclude=True)
+    # @extend_schema(exclude=True)
     def post(self, request, *args, **kwargs):
         return super(OrganizationListAPI, self).post(request, *args, **kwargs)
 
@@ -278,8 +318,8 @@ class OrganizationMemberDetailAPI(GetParentObjectMixin, generics.RetrieveDestroy
 
     def delete(self, request, pk=None, user_pk=None):
         org = self.parent_object
-        if org != request.user.active_organization:
-            raise PermissionDenied('You can delete members only for your current active organization')
+        # if org != request.user.active_organization:
+        #     raise PermissionDenied('You can delete members only for your current active organization')
 
         user = get_object_or_404(User, pk=user_pk)
         member = get_object_or_404(OrganizationMember, user=user, organization=org)
@@ -395,3 +435,81 @@ class OrganizationResetTokenAPI(APIView):
         serializer = OrganizationInviteSerializer(data={'invite_url': invite_url, 'token': org.token})
         serializer.is_valid()
         return Response(serializer.data, status=201)
+
+
+@method_decorator(
+    name='post',
+    decorator=extend_schema(
+        tags=['Organizations'],
+        summary='Add a user to an organization',
+        description="""
+        Add an existing user (by user ID) to the specified organization.
+
+        - The user must already exist in the system.
+        - If the user was previously removed (soft-deleted), they will be re-added.
+        - If already an active member, the operation is idempotent.
+        """,
+        request=OrganizationMemberAddSerializer,
+        responses={
+            201: OpenApiResponse(
+                response=OrganizationMemberSerializer,
+                description="User successfully added to the organization."
+            ),
+            200: OpenApiResponse(
+                response=OrganizationMemberSerializer,
+                description="User was already an active member."
+            ),
+            400: OpenApiResponse(description="Invalid user_id or user does not exist."),
+            403: OpenApiResponse(description="You don't have permission to modify this organization."),
+            404: OpenApiResponse(description="Organization not found."),
+        },
+        extensions={
+            'x-fern-sdk-group-name': ['organizations', 'members'],
+            'x-fern-sdk-method-name': 'add',
+            'x-fern-audiences': ['public'],
+        },
+    ),
+)
+class OrganizationMemberAddAPI(GetParentObjectMixin, generics.CreateAPIView):
+    """
+    Add a user to an organization by user ID.
+    """
+    parent_queryset = Organization.objects.all()
+    permission_required = all_permissions.organizations_change
+    parser_classes = (JSONParser,)
+    serializer_class = OrganizationMemberAddSerializer
+
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context['organization'] = self.parent_object
+        return context
+
+    def post(self, request, *args, **kwargs):
+        org = self.parent_object
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        user = serializer.validated_data['user_id']
+
+        # Check if already an active member
+        active_member = OrganizationMember.objects.filter(
+            user=user,
+            organization=org,
+            deleted_at__isnull=True
+        ).first()
+
+        if active_member:
+            # Already active → return 200
+            member_serializer = OrganizationMemberSerializer(active_member, context=self.get_serializer_context())
+            return Response(member_serializer.data, status=status.HTTP_200_OK)
+
+        # Otherwise, ensure the member exists and is active (handles soft-delete recovery)
+        member, created = OrganizationMember.objects.update_or_create(
+            user=user,
+            organization=org,
+            defaults={'deleted_at': None}
+        )
+
+        member_serializer = OrganizationMemberSerializer(member, context=self.get_serializer_context())
+        status_code = status.HTTP_201_CREATED if created else status.HTTP_200_OK
+        return Response(member_serializer.data, status=status_code)
+

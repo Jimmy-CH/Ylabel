@@ -113,13 +113,13 @@ class SSOJWTAuthentication(authentication.BaseAuthentication):
 
         try:
             payload = self.parser_token(token)
-
-            exp = payload.get('exp')
-            if exp is not None:
-                if not isinstance(exp, (int, float)):
-                    raise exceptions.AuthenticationFailed('Invalid expiration time in token')
-                if time.time() > exp:
-                    raise exceptions.AuthenticationFailed('Token expired')
+            # 测试时注释过期时间
+            # exp = payload.get('exp')
+            # if exp is not None:
+            #     if not isinstance(exp, (int, float)):
+            #         raise exceptions.AuthenticationFailed('Invalid expiration time in token')
+            #     if time.time() > exp:
+            #         raise exceptions.AuthenticationFailed('Token expired')
             # print('payload', payload)
             user_info = payload.get('userInfo')
             if not user_info:

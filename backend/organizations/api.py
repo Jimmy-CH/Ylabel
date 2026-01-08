@@ -18,6 +18,7 @@ from organizations.serializers import (
     OrganizationMemberListSerializer,
     OrganizationMemberSerializer,
     OrganizationSerializer,
+    OrganizationCreateSerializer,
 )
 from projects.models import Project
 from rest_framework import generics, status
@@ -55,6 +56,34 @@ HasObjectPermission = load_func(settings.MEMBER_PERM)
         },
     ),
 )
+@method_decorator(
+    name='post',
+    decorator=extend_schema(
+        tags=['Organizations'],
+        summary='Create a new organization',
+        description="""
+        Create a new organization. You will be automatically set as the creator and added as an active member.
+
+        - `title` is required and must be unique per your account.
+        - `contact_info` is optional (email format).
+        - The system auto-generates a unique `token` for invite URLs.
+        """,
+        request=OrganizationCreateSerializer,
+        responses={
+            201: OpenApiResponse(
+                response=OrganizationIdSerializer,
+                description="Organization created successfully."
+            ),
+            400: OpenApiResponse(description="Bad request (e.g., missing title, invalid email)."),
+            403: OpenApiResponse(description="You don't have permission to create organizations."),
+        },
+        extensions={
+            'x-fern-sdk-group-name': 'organizations',
+            'x-fern-sdk-method-name': 'create',
+            'x-fern-audiences': ['public'],
+        },
+    ),
+)
 class OrganizationListAPI(generics.ListCreateAPIView):
     queryset = Organization.objects.all()
     parser_classes = (JSONParser, FormParser, MultiPartParser)
@@ -65,9 +94,15 @@ class OrganizationListAPI(generics.ListCreateAPIView):
         PATCH=all_permissions.organizations_change,
         DELETE=all_permissions.organizations_change,
     )
-    serializer_class = OrganizationIdSerializer
+    # serializer_class = OrganizationIdSerializer
+
+    def get_serializer_class(self):
+        if self.request.method == 'POST':
+            return OrganizationCreateSerializer  # 安全的创建序列化器
+        return OrganizationIdSerializer
 
     def filter_queryset(self, queryset):
+        # 只返回用户未被 soft-delete 的组织
         return queryset.filter(
             organizationmember__in=self.request.user.om_through.filter(deleted_at__isnull=True)
         ).distinct()

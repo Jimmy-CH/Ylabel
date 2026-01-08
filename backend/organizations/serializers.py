@@ -80,3 +80,20 @@ class OrganizationMemberSerializer(DynamicFieldsMixin, serializers.ModelSerializ
 class OrganizationInviteSerializer(serializers.Serializer):
     token = serializers.CharField(required=False)
     invite_url = serializers.CharField(required=False)
+
+
+class OrganizationCreateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Organization
+        fields = ('title', 'contact_info')  # 只暴露客户端可写的字段
+        extra_kwargs = {
+            'title': {'required': True, 'help_text': 'Name of the organization'},
+            'contact_info': {'required': False, 'help_text': 'Optional contact email'},
+        }
+
+    def create(self, validated_data):
+        user = self.context['request'].user
+        validated_data['created_by'] = user
+        org = Organization.objects.create(**validated_data)
+        org.add_user(user)  # 确保创建者是成员（根据你的模型逻辑）
+        return org

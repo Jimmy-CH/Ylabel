@@ -142,15 +142,15 @@ ALLOW_SCHEDULED_MIGRATIONS = get_bool_env('ALLOW_SCHEDULED_MIGRATIONS', False)
 DJANGO_DB_MYSQL = 'mysql'
 DJANGO_DB_SQLITE = 'sqlite'
 DJANGO_DB_POSTGRESQL = 'postgresql'
-DJANGO_DB = 'default'
+DJANGO_DB = 'postgresql'
 DATABASE_NAME_DEFAULT = os.path.join(BASE_DATA_DIR, 'label_studio.sqlite3')
 DATABASE_NAME = get_env('DATABASE_NAME', DATABASE_NAME_DEFAULT)
 DATABASES_ALL = {
     DJANGO_DB_POSTGRESQL: {
         'ENGINE': 'django.db.backends.postgresql',
         'USER': get_env('POSTGRE_USER', 'postgres'),
-        'PASSWORD': get_env('POSTGRE_PASSWORD', 'postgres'),
-        'NAME': get_env('POSTGRE_NAME', 'postgres'),
+        'PASSWORD': get_env('POSTGRE_PASSWORD', '4432chen'),
+        'NAME': get_env('POSTGRE_NAME', 'label_studio'),
         'HOST': get_env('POSTGRE_HOST', 'localhost'),
         'PORT': int(get_env('POSTGRE_PORT', '5432')),
     },
@@ -170,7 +170,7 @@ DATABASES_ALL = {
         },
     },
 }
-DATABASES_ALL['default'] = DATABASES_ALL[DJANGO_DB_MYSQL]
+DATABASES_ALL['default'] = DATABASES_ALL[DJANGO_DB_POSTGRESQL]
 DATABASES = {'default': DATABASES_ALL.get(get_env('DJANGO_DB', 'default'))}
 
 DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'

@@ -3,13 +3,41 @@ import json
 import logging
 import os
 import re
+import yaml
+import platform
 from datetime import timedelta
 
 from django.core.exceptions import ImproperlyConfigured
 
 from core.utils.params import get_bool_env, get_env, get_env_list, has_env
 
-DEBUG = get_bool_env('DEBUG', True)
+# Build paths inside the project like this: os.path.join(BASE_DIR, ...)
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+ENVIRONMENT = os.environ.get('DJANGO_ENV', 'dev')
+CONFIG_FILE = os.path.join(BASE_DIR, 'configs', 'config.yml')
+
+
+def load_yaml_config():
+    try:
+        with open(CONFIG_FILE, 'r', encoding='utf-8') as file:
+            return yaml.safe_load(file)
+    except FileNotFoundError:
+        raise ImproperlyConfigured(f"Config file {CONFIG_FILE} not found.")
+    except yaml.YAMLError as e:
+        raise ImproperlyConfigured(f"Error parsing YAML config: {e}")
+
+
+config_data = load_yaml_config()
+try:
+    env_config = config_data[ENVIRONMENT]
+except KeyError:
+    raise ImproperlyConfigured(f"Environment '{ENVIRONMENT}' not found in config.yml.")
+
+SECRET_KEY = env_config['secret_key']
+DEBUG = env_config['debug']
+print(f"Current Environment: {ENVIRONMENT}")
+
 DEFAULT_FORMATTER = 'json' if get_bool_env('JSON_LOG', False) else 'standard'
 DEFAULT_LOG_LEVEL = 'DEBUG' if DEBUG else 'INFO'
 LOG_LEVEL = os.getenv('LOG_LEVEL', DEFAULT_LOG_LEVEL).upper()
@@ -70,8 +98,6 @@ if not logging.getLogger().hasHandlers():
 logging.getLogger('faker').setLevel(logging.WARNING)
 logging.getLogger('faker.providers').setLevel(logging.WARNING)
 
-from core.utils.io import get_data_dir
-
 logger = logging.getLogger(__name__)
 SILENCED_SYSTEM_CHECKS = []
 
@@ -120,13 +146,11 @@ VERIFY_SSL_CERTS = get_bool_env('VERIFY_SSL_CERTS', True)
 # 'sqlite-dll-<arch>-<version>.zip' should be hosted at this prefix
 WINDOWS_SQLITE_BINARY_HOST_PREFIX = get_env('WINDOWS_SQLITE_BINARY_HOST_PREFIX', 'https://www.sqlite.org/2023/')
 
-# Build paths inside the project like this: os.path.join(BASE_DIR, ...)
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-
 # Base path for media root and other uploaded files
-BASE_DATA_DIR = get_env('BASE_DATA_DIR')
-if BASE_DATA_DIR is None:
-    BASE_DATA_DIR = get_data_dir()
+if platform.system().lower() == 'windows':
+    BASE_DATA_DIR = os.path.join(BASE_DIR, 'data')
+else:
+    BASE_DATA_DIR = '/opt/app/data'
 os.makedirs(BASE_DATA_DIR, exist_ok=True)
 logger.info('=> Database and media directory: %s', BASE_DATA_DIR)
 
@@ -138,40 +162,18 @@ CI = get_bool_env('CI', False)
 ALLOW_SCHEDULED_MIGRATIONS = get_bool_env('ALLOW_SCHEDULED_MIGRATIONS', False)
 
 # Databases
-# https://docs.djangoproject.com/en/2.1/ref/settings/#databases
-DJANGO_DB_MYSQL = 'mysql'
 DJANGO_DB_SQLITE = 'sqlite'
-DJANGO_DB_POSTGRESQL = 'postgresql'
 DJANGO_DB = 'postgresql'
-DATABASE_NAME_DEFAULT = os.path.join(BASE_DATA_DIR, 'label_studio.sqlite3')
-DATABASE_NAME = get_env('DATABASE_NAME', DATABASE_NAME_DEFAULT)
-DATABASES_ALL = {
-    DJANGO_DB_POSTGRESQL: {
+DATABASES = {
+    'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'USER': get_env('POSTGRE_USER', 'postgres'),
-        'PASSWORD': get_env('POSTGRE_PASSWORD', '4432chen'),
-        'NAME': get_env('POSTGRE_NAME', 'label_studio'),
-        'HOST': get_env('POSTGRE_HOST', 'localhost'),
-        'PORT': int(get_env('POSTGRE_PORT', '5432')),
-    },
-    DJANGO_DB_MYSQL: {
-        'ENGINE': 'django.db.backends.mysql',
-        'USER': get_env('MYSQL_USER', 'root'),
-        'PASSWORD': get_env('MYSQL_PASSWORD', '4432chen'),
-        'NAME': get_env('MYSQL_NAME', 'label_studio'),
-        'HOST': get_env('MYSQL_HOST', 'localhost'),
-        'PORT': int(get_env('MYSQL_PORT', '3306')),
-    },
-    DJANGO_DB_SQLITE: {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': DATABASE_NAME,
-        'OPTIONS': {
-            # 'timeout': 20,
-        },
+        'USER': env_config.get('POSTGRE_USER', 'postgres'),
+        'PASSWORD': env_config.get('POSTGRE_PASSWORD', '4432chen'),
+        'NAME': env_config.get('POSTGRE_NAME', 'label_studio'),
+        'HOST': env_config.get('POSTGRE_HOST', 'localhost'),
+        'PORT': int(env_config.get('POSTGRE_PORT', '5432')),
     },
 }
-DATABASES_ALL['default'] = DATABASES_ALL[DJANGO_DB_POSTGRESQL]
-DATABASES = {'default': DATABASES_ALL.get(get_env('DJANGO_DB', 'default'))}
 
 DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
 
@@ -926,6 +928,4 @@ FSM_INFERENCE_FUNCTION = 'fsm.state_inference._get_or_infer_state'
 # can use settings.SERVICE_QUEUE_NAME in async migrations in LSO
 SERVICE_QUEUE_NAME = get_env('SERVICE_QUEUE_NAME', 'default')
 
-# 新增配置
-SECRET_KEY = '7#33_!ae+t7eg1n#5c0+xa811^a5d!+a0=b8a!*ha04m9wve_('
 

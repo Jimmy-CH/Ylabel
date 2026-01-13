@@ -1,145 +1,56 @@
 # config.yml - Label Studio 配置文件模板
-# 说明：此文件中的配置项将覆盖同名环境变量（若存在）
+# 此文件中的配置项将覆盖同名环境变量（若存在）
 
-# 基础设置
-debug: true
-allowed_hosts:
-  - "*"
-secret_key: "7#33_!ae+t7eg1n#5c0+xa811^a5d!+a0=b8a!*ha04m9wve_("
+dev:
+  # 基础设置
+  debug: true
+  allowed_hosts:
+    - "*"
+  secret_key: "7#33_!ae+t7eg1n#5c0+xa811^a5d!+a0=b8a!*ha04m9wve_("
 
-# 主机与前端
-host: "http://localhost:8080"
-frontend_hostname: "http://localhost:8010"
-domain_from_request: false
-frontend_hmr: false
+  # 主机与前端
+  host: "http://localhost:8080"
+  frontend_hostname: "http://localhost:8010"
+  domain_from_request: false
+  frontend_hmr: false
 
-# 日志
-log_level: "INFO"
-json_log: false
+  # 日志
+  log_level: "INFO"
+  json_log: false
 
-# 数据目录
-base_data_dir: "/path/to/your/data"
+  # 数据目录
+  base_data_dir: "/path/to/your/data"
 
-# 数据库
-django_db: "sqlite"  # 可选: sqlite, postgresql, mysql
-database_name: "/path/to/your/data/label_studio.sqlite3"
+  postgre_user: "postgres"
+  postgre_password: "4432chen"
+  postgre_name: "label_studio"
+  postgre_host: "localhost"
+  postgre_port: 5432
 
-# PostgreSQL (当 django_db == postgresql 时生效)
-postgre_user: "postgres"
-postgre_password: "postgres"
-postgre_name: "postgres"
-postgre_host: "localhost"
-postgre_port: 5432
+prod:
+  # 基础设置
+  debug: true
+  allowed_hosts:
+    - "*"
+  secret_key: "7#33_!ae+t7eg1n#5c0+xa811^a5d!+a0=b8a!*ha04m9wve_("
 
-# MySQL (当 django_db == mysql 时生效)
-mysql_user: "root"
-mysql_password: ""
-mysql_name: "labelstudio"
-mysql_host: "localhost"
-mysql_port: 3306
+  # 主机与前端
+  host: "http://localhost:8080"
+  frontend_hostname: "http://localhost:8010"
+  domain_from_request: false
+  frontend_hmr: false
 
-# 安全
-session_cookie_secure: false
-csrf_cookie_secure: false
-session_cookie_samesite: "Lax"
-csrf_cookie_samesite: "Lax"
-csrf_trusted_origins: []
+  # 日志
+  log_level: "INFO"
+  json_log: false
 
-# CORS
-cors_allow_all_origins: true
-# cors_allowed_origins:
-#   - "https://your-frontend.com"
-# cors_allowed_origin_regexes:
-#   - "https://.*\.yourdomain\.com"
+  # 数据目录
+  base_data_dir: "/path/to/your/data"
 
-# 文件上传限制
-data_upload_max_memory_size: 262144000  # 250 MB
-data_upload_max_number_files: 100
+  postgre_user: "postgres"
+  postgre_password: "postgres"
+  postgre_name: "postgres"
+  postgre_host: "localhost"
+  postgre_port: 5432
 
-# 邮件
-from_email: "Label Studio <hello@labelstud.io>"
-email_backend: "django.core.mail.backends.dummy.EmailBackend"
 
-# 会话超时（秒）
-max_session_age: 1209600        # 14 天
-max_time_between_activity: 432000  # 5 天
-inactivity_session_timeout_enabled: true
-
-# RQ 任务队列
-rq_failed_job_ttl: 2592000  # 30 天
-
-# Webhook
-webhook_timeout: 1.0
-webhook_batch_size: 5000
-
-# 特性开关
-collect_analytics: true
-experimental_features: false
-svg_security_cleanup: false
-ml_block_local_ip: false
-enable_csp: true
-ls_csp_report_only: true
-# ls_csp_report_uri: "https://your-csp-endpoint.com/report"
-
-# 云存储（MinIO/S3/Azure/GCS）
-# minio_storage_endpoint: "http://minio:9000"
-# minio_storage_access_key: "minioadmin"
-# minio_storage_secret_key: "minioadmin"
-# minio_storage_bucket_name: "label-studio"
-
-# 或使用通用 S3 配置
-# storage_type: "s3"
-# storage_aws_access_key_id: "..."
-# storage_aws_secret_access_key: "..."
-# storage_aws_bucket_name: "my-bucket"
-# storage_aws_region_name: "us-east-1"
-# storage_aws_endpoint_url: "https://s3.us-east-1.amazonaws.com"
-# storage_aws_folder: ""  # 可选前缀
-
-# Azure
-# storage_type: "azure"
-# storage_azure_account_name: "..."
-# storage_azure_account_key: "..."
-# storage_azure_container_name: "my-container"
-# storage_azure_folder: ""
-
-# GCS
-# storage_type: "gcs"
-# storage_gcs_project_id: "my-project"
-# storage_gcs_bucket_name: "my-bucket"
-# storage_gcs_folder: ""
-# gcs_cloud_storage_force_default_credentials: false
-
-# Sentry 错误监控
-sentry_dsn: ""
-sentry_rate: 0.02
-sentry_environment: "stage.opensource"
-frontend_sentry_dsn: ""
-frontend_sentry_rate: 0.01
-frontend_sentry_environment: "stage.opensource"
-
-# 其他
-verify_ssl_certs: true
-windows_sqlite_binary_host_prefix: "https://www.sqlite.org/2023/"
-latest_version_check: true
-allow_organization_webhooks: false
-public_api_docs: false
-
-# 用户与认证
-disable_signup_without_link: false
-use_username_for_login: false
-auth_password_min_length: 8
-auth_password_max_length: 128
-
-# 导出与导入
-use_nginx_for_export_downloads: false
-use_nginx_for_uploads: true
-sync_on_target_storage_creation: true
-allow_import_tasks_with_unknown_emails: false
-
-# 功能标志（Feature Flags）
-feature_flags_api_key: "any key"
-feature_flags_offline: true
-feature_flags_from_file: false
-feature_flags_file: "feature_flags.json"
-feature_flags_default_value: false

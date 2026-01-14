@@ -19,13 +19,19 @@ dev:
   json_log: false
 
   # 数据目录
-  base_data_dir: "/path/to/your/data"
+  base_data_dir: "/opt/application/ylabel/data"
 
-  postgre_user: "postgres"
-  postgre_password: "4432chen"
+  postgre_user: "ytlabel"
+  postgre_password: "ldjk*dh2G#D7D*SD1s35djd"
   postgre_name: "label_studio"
-  postgre_host: "localhost"
+  postgre_host: "10.130.121.112"
   postgre_port: 5432
+
+  # redis
+  redis_host: '10.130.18.74'
+  redis_port: 6379
+  redis_password: '123456'
+  redis_db: 12
 
 prod:
   # 基础设置
@@ -45,12 +51,18 @@ prod:
   json_log: false
 
   # 数据目录
-  base_data_dir: "/path/to/your/data"
+  base_data_dir: "/opt/application/ylabel/data"
 
   postgre_user: "postgres"
   postgre_password: "postgres"
-  postgre_name: "postgres"
+  postgre_name: "label_studio"
   postgre_host: "localhost"
   postgre_port: 5432
+
+  # redis
+  redis_host: '10.130.18.74'
+  redis_port: 6374
+  redis_password: '123456'
+  redis_db: 12
 
 

@@ -150,7 +150,7 @@ WINDOWS_SQLITE_BINARY_HOST_PREFIX = get_env('WINDOWS_SQLITE_BINARY_HOST_PREFIX',
 if platform.system().lower() == 'windows':
     BASE_DATA_DIR = os.path.join(BASE_DIR, 'data')
 else:
-    BASE_DATA_DIR = '/opt/app/data'
+    BASE_DATA_DIR = '/opt/application/ylabel/data'
 os.makedirs(BASE_DATA_DIR, exist_ok=True)
 logger.info('=> Database and media directory: %s', BASE_DATA_DIR)
 
@@ -167,11 +167,11 @@ DJANGO_DB = 'postgresql'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'USER': env_config.get('POSTGRE_USER', 'postgres'),
-        'PASSWORD': env_config.get('POSTGRE_PASSWORD', '4432chen'),
-        'NAME': env_config.get('POSTGRE_NAME', 'label_studio'),
-        'HOST': env_config.get('POSTGRE_HOST', 'localhost'),
-        'PORT': int(env_config.get('POSTGRE_PORT', '5432')),
+        'USER': env_config.get('postgre_user', 'postgres'),
+        'PASSWORD': env_config.get('postgre_password', '4432chen'),
+        'NAME': env_config.get('postgre_name', 'label_studio'),
+        'HOST': env_config.get('postgre_host', 'localhost'),
+        'PORT': int(env_config.get('postgre_port', '5432')),
     },
 }
 
@@ -341,34 +341,37 @@ TEMPLATES = [
     }
 ]
 
-# OSS version does not support Redis
+# OSS version does not support Redis 暂不开启redis
 REDIS_ENABLED = False
-
 # RQ
 RQ_QUEUES = {
     'critical': {
-        'HOST': 'localhost',
-        'PORT': 6379,
-        'DB': 0,
+        'HOST': env_config.get('redis_host', 'localhost'),
+        'PORT': env_config.get('redis_port', 6379),
+        'DB': env_config.get('redis_db', 12),
         'DEFAULT_TIMEOUT': 180,
+        'PASSWORD': env_config.get('redis_password', '')
     },
     'high': {
-        'HOST': 'localhost',
-        'PORT': 6379,
-        'DB': 0,
+        'HOST': env_config.get('redis_host', 'localhost'),
+        'PORT': env_config.get('redis_port', 6379),
+        'DB': env_config.get('redis_db', 12),
         'DEFAULT_TIMEOUT': 180,
+        'PASSWORD': env_config.get('redis_password', '')
     },
     'default': {
-        'HOST': 'localhost',
-        'PORT': 6379,
-        'DB': 0,
+        'HOST': env_config.get('redis_host', 'localhost'),
+        'PORT': env_config.get('redis_port', 6379),
+        'DB': env_config.get('redis_db', 12),
         'DEFAULT_TIMEOUT': 180,
+        'PASSWORD': env_config.get('redis_password', '')
     },
     'low': {
-        'HOST': 'localhost',
-        'PORT': 6379,
-        'DB': 0,
+        'HOST': env_config.get('redis_host', 'localhost'),
+        'PORT': env_config.get('redis_port', 6379),
+        'DB': env_config.get('redis_db', 12),
         'DEFAULT_TIMEOUT': 180,
+        'PASSWORD': env_config.get('redis_password', '')
     },
 }
 
@@ -427,8 +430,8 @@ GRAPHIQL = True
 
 # Internationalization
 # https://docs.djangoproject.com/en/2.1/topics/i18n/
-LANGUAGE_CODE = 'en-us'
-TIME_ZONE = 'UTC'
+LANGUAGE_CODE = 'zh-hans'  # 简体中文
+TIME_ZONE = 'Asia/Shanghai'
 USE_I18N = False
 USE_L10N = True
 USE_TZ = True
@@ -547,7 +550,9 @@ EMAIL_BACKEND = get_env('EMAIL_BACKEND', 'django.core.mail.backends.dummy.EmailB
 
 ENABLE_LOCAL_FILES_STORAGE = get_bool_env('ENABLE_LOCAL_FILES_STORAGE', default=True)
 LOCAL_FILES_SERVING_ENABLED = get_bool_env('LOCAL_FILES_SERVING_ENABLED', default=False)
-LOCAL_FILES_DOCUMENT_ROOT = get_env('LOCAL_FILES_DOCUMENT_ROOT', default=os.path.abspath(os.sep))
+# LOCAL_FILES_DOCUMENT_ROOT = get_env('LOCAL_FILES_DOCUMENT_ROOT', default=os.path.abspath(os.sep))
+LOCAL_FILES_DOCUMENT_ROOT = os.path.join(BASE_DATA_DIR, 'local_files')
+os.makedirs(LOCAL_FILES_DOCUMENT_ROOT, exist_ok=True)
 
 SYNC_ON_TARGET_STORAGE_CREATION = get_bool_env('SYNC_ON_TARGET_STORAGE_CREATION', default=True)
 

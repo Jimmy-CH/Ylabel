@@ -1,4 +1,4 @@
-# label_studio_client.py
+
 import os
 import json
 import requests
@@ -206,7 +206,7 @@ class LabelStudioClient:
 
         # Step 3: Get real task_id by filename (with retry)
         task_id = self.get_task_id_by_filename(project_id, audio_file_path)
-        print(f"✅ Found task_id: {task_id}")
+        print(f" Found task_id: {task_id}")
 
         # Step 4: Build annotation
         seg_datas = (json_data.get("ref_anno") or {}).get("seg_datas") or \
@@ -262,12 +262,12 @@ class LabelStudioClient:
                     data = json.loads(line)
                     wav_path = data.get("wav")
                     if not wav_path:
-                        print(f"[Line {line_num}] ❌ Missing 'wav' field. Skipped.")
+                        print(f"[Line {line_num}]  Missing 'wav' field. Skipped.")
                         error_count += 1
                         continue
 
                     if not os.path.exists(wav_path):
-                        msg = f"[Line {line_num}] ❌ WAV not found: {wav_path}"
+                        msg = f"[Line {line_num}]  WAV not found: {wav_path}"
                         if skip_missing_wav:
                             print(msg + " (Skipped)")
                             error_count += 1
@@ -278,18 +278,18 @@ class LabelStudioClient:
                     # Process this record
                     self.run_full_pipeline_with_json(project_id, wav_path, data)
                     success_count += 1
-                    print(f"[Line {line_num}] ✅ Success\n")
+                    print(f"[Line {line_num}] Success\n")
 
                 except Exception as e:
                     import traceback
-                    print(f"[Line {line_num}] ❌ Error: {e}")
+                    print(f"[Line {line_num}] Error: {e}")
                     print("Traceback (most recent call last):")
                     traceback.print_exc()
                     print()  # 空行分隔
 
-        print(f"\n🎉 Processing completed!")
-        print(f"✅ Success: {success_count}")
-        print(f"❌ Errors: {error_count}")
+        print(f"\n Processing completed!")
+        print(f"Success: {success_count}")
+        print(f"Errors: {error_count}")
 
 
 # ================== 使用示例 ==================
@@ -309,4 +309,4 @@ if __name__ == "__main__":
             max_records=None # 设置为 5 可测试前5条
         )
     except Exception as e:
-        print(f"❌ Fatal error: {e}")
+        print(f"Fatal error: {e}")

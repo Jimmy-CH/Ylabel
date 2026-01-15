@@ -173,12 +173,14 @@ class LabelStudioClient:
                 page += 1
             # 查找匹配的 task
             for task in all_tasks:
-                # print('task', task)
-                audio_path = task.get("data", {}).get("audio", "")
-                task_filename = os.path.basename(str(audio_path))
-                print('task_filename', task_filename)
-                if task_filename.split('-', 1)[1] == target_filename:
-                    return task["id"]
+                print('task', task)
+                # audio_path = task.get("data", {}).get("audio", "")
+                data_values = task.get("data", {}).values()
+                for audio_path in data_values:
+                    task_filename = os.path.basename(str(audio_path))
+                    print('task_filename', task_filename)
+                    if task_filename.split('-', 1)[1] == target_filename:
+                        return task["id"]
 
             # 如果没找到，等待后重试（reimport 可能是异步的）
             if attempt < max_retries - 1:
@@ -305,10 +307,10 @@ if __name__ == "__main__":
 
     try:
         client.process_jsonl_file(
-            project_id=2,
+            project_id=1,
             jsonl_path="./data.jsonl",
             skip_missing_wav=True,
-            max_records=None# 设置为 5 可测试前5条
+            max_records=None       # 设置为 5 可测试前5条
         )
     except Exception as e:
         print(f"Fatal error: {e}")

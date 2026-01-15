@@ -296,7 +296,7 @@ class LabelStudioClient:
         print(f"Errors: {error_count}")
 
 
-# ================== 使用示例 ==================
+# 使用示例
 if __name__ == "__main__":
     client = LabelStudioClient(
         base_url="http://10.130.11.184:8000/",

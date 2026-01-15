@@ -173,8 +173,10 @@ class LabelStudioClient:
                 page += 1
             # 查找匹配的 task
             for task in all_tasks:
+                # print('task', task)
                 audio_path = task.get("data", {}).get("audio", "")
                 task_filename = os.path.basename(str(audio_path))
+                print('task_filename', task_filename)
                 if task_filename.split('-', 1)[1] == target_filename:
                     return task["id"]
 
@@ -295,18 +297,18 @@ class LabelStudioClient:
 # ================== 使用示例 ==================
 if __name__ == "__main__":
     client = LabelStudioClient(
-        base_url="http://10.130.18.74:8080",
+        base_url="http://10.130.11.184:8000/",
         sessionid=".eJxVT8uOgyAU_RfWSuACAi67n28gCBdlaqARTaadzL9Pbbrp8rxzfsmRIxlJQqslV6wHTLyXiUHvhxB6bpWJAkISMZGO1G32JT_8nmtxtysZeUdW33a31jmXJ9SD4dpyLinTfABtO-L8sS_uaLi519RAPrjJhyuWU4jfvsyVhlr2LU_0tNC32uhXjbhe3t6PgsW35ZmW1mDUAEFCACMNKAGohI026cgShhAMQtLcWqPNBGxAprzwUmgJKF-lDVs7n-HPLW93MoKywBhlf__R0Ft_:1vgGGv:UDNTU32Ht6WOUOpI_GmNfd_zmUfmAIi0qlb50lrDk2U",
         csrftoken="GSlBrDnYVkartJxKe5tFRNexKYiwCf8v",
-        auth_token="sssss"
+        auth_token="eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySW5mbyI6eyJ1c2VyQ29kZSI6IjAzNDIwMDkyIiwidXNlck5hbWUiOiLpmYjlhYkiLCJ1c2VyQ2xpZW50SWQiOiJQQy1YRC1TRVJWRVIiLCJleHRlbmRBdHRyaWJ1dGVzIjp7InVzZXJDaGFubmVsIjoiSFIiLCJ1c2VyTWFyayI6IkhSX0VYUFJFU1MifSwicmVsYXRpb25MaXN0IjpudWxsLCJtdWx0aU9yZ1ZPIjpudWxsfSwibG9naW5UaW1lIjoxNzY3NzcxNDI1LCJncmFudF90eXBlIjoieXRvX3RnYyIsInVzZXJfbmFtZSI6IjAzNDIwMDkyIiwic2NvcGUiOlsic2VydmVyIl0sImV4cCI6MTc2Nzc3ODYyNSwianRpIjoiMDA2MWI5YWEtZDU2NC00ZmU4LTg3M2ItYTExOTQ5MjkxZjU4IiwiY2xpZW50X2lkIjoiUEMtWEQtU0VSVkVSIn0.IaNcNTsbVoxdV8ZlZKMNpqKJRX3jjNSfuz0WVNIjeC0ssY-FwRCChETdcF5RR5ZrFtucpIwPdKAfF6h9bBE75wnfL7J7LoYF858IAo28md-g2kbueY4jPrHZMwaDIvxp5lfQSUOy0sXzLwhMiHoLnR7F-g8PcopgdfgfyF9N4Z0"
     )
 
     try:
         client.process_jsonl_file(
-            project_id=22,
+            project_id=2,
             jsonl_path="./data.jsonl",
             skip_missing_wav=True,
-            max_records=None # 设置为 5 可测试前5条
+            max_records=None# 设置为 5 可测试前5条
         )
     except Exception as e:
         print(f"Fatal error: {e}")

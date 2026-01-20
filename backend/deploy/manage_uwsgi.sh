@@ -3,12 +3,12 @@
 # ========== 配置变量 ==========
 APP_NAME="ylabel"
 APP_ROOT="/opt/application/ylabel"
-APP_DIR="$APP_ROOT/ylabel"                     # 注意：chdir 指向的是 ylabel/ylabel
-VENV_BIN="$APP_ROOT/venv/bin"                  # 假设虚拟环境在此（若无 venv 可调整）
+APP_DIR="$APP_ROOT/backend"
+VENV_BIN="$APP_ROOT/venv/bin"
 UWSGI_BIN="$VENV_BIN/uwsgi"
 UWSGI_INI="$APP_DIR/deploy/uwsgi.ini"
-PID_FILE="/opt/application/ylabel/uwsgi.pid"   # 与 uwsgi.ini 中 pidfile 一致
-LOG_FILE="$APP_ROOT/logs/uwsgi.log"            # 与 daemonize 路径一致
+PID_FILE="$APP_ROOT/uwsgi.pid"
+LOG_FILE="$APP_ROOT/logs/uwsgi.log"
 # =============================
 
 # 加载系统环境变量（可选）

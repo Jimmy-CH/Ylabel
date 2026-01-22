@@ -343,13 +343,94 @@ class LabelStudioClient:
         print(f"Success: {success_count}")
         print(f"Errors: {error_count}")
 
+    def create_default_view(self, project_id: int) -> Dict[str, Any]:
+        """
+        为指定项目创建一个默认数据管理视图（Data Manager View）。
+        模拟 Postman 请求：POST /api/dm/views?tabID=0&project={project_id}
+        """
+        url = f"{self.base_url}/api/dm/views"
+        params = {
+            "tabID": "0",
+            "project": str(project_id)
+        }
+
+        view_data = {
+            "title": "Default",
+            "ordering": [],
+            "type": "list",
+            "target": "tasks",
+            "filters": {
+                "conjunction": "and",
+                "items": []
+            },
+            "hiddenColumns": {
+                "explore": [
+                    "tasks:inner_id",
+                    "tasks:annotations_results",
+                    "tasks:annotations_ids",
+                    "tasks:predictions_score",
+                    "tasks:predictions_model_versions",
+                    "tasks:predictions_results",
+                    "tasks:file_upload",
+                    "tasks:storage_filename",
+                    "tasks:created_at",
+                    "tasks:updated_at",
+                    "tasks:updated_by",
+                    "tasks:avg_lead_time",
+                    "tasks:draft_exists"
+                ],
+                "labeling": [
+                    "tasks:id",
+                    "tasks:inner_id",
+                    "tasks:completed_at",
+                    "tasks:cancelled_annotations",
+                    "tasks:total_predictions",
+                    "tasks:annotators",
+                    "tasks:annotations_results",
+                    "tasks:annotations_ids",
+                    "tasks:predictions_score",
+                    "tasks:predictions_model_versions",
+                    "tasks:predictions_results",
+                    "tasks:file_upload",
+                    "tasks:storage_filename",
+                    "tasks:created_at",
+                    "tasks:updated_at",
+                    "tasks:updated_by",
+                    "tasks:avg_lead_time",
+                    "tasks:draft_exists"
+                ]
+            },
+            "columnsWidth": {},
+            "columnsDisplayType": {},
+            "gridWidth": 4,
+            "gridFitImagesToWidth": False,
+            "semantic_search": [],
+            "agreement_selected": {}
+        }
+
+        payload = {
+            "data": view_data,
+            "project": str(project_id)
+        }
+
+        response = requests.post(
+            url,
+            params=params,
+            json=payload,
+            cookies=self.cookies,
+            headers=self._make_headers("application/json")
+        )
+        response.raise_for_status()
+        return response.json()
+
 
 # 使用示例
 if __name__ == "__main__":
     client = LabelStudioClient(
         base_url="http://10.130.18.74:8080/",
-        sessionid=".eJxVT8uOgyAU_RfWSuACAi67n28gCBdlaqARTaadzL9Pbbrp8rxzfsmRIxlJQqslV6wHTLyXiUHvhxB6bpWJAkISMZGO1G32JT_8nmtxtysZeUdW33a31jmXJ9SD4dpyLinTfABtO-L8sS_uaLi519RAPrjJhyuWU4jfvsyVhlr2LU_0tNC32uhXjbhe3t6PgsW35ZmW1mDUAEFCACMNKAGohI026cgShhAMQtLcWqPNBGxAprzwUmgJKF-lDVs7n-HPLW93MoKywBhlf__R0Ft_:1vgGGv:UDNTU32Ht6WOUOpI_GmNfd_zmUfmAIi0qlb50lrDk2U",
-        csrftoken="GSlBrDnYVkartJxKe5tFRNexKYiwCf8v",
+        # base_url="http://10.130.11.184:8000/",
+        sessionid=".eJxVT0luhDAQ_IvPYHlt2xxzzxuQ227AGYRHGKQsyt8TRnNIjrWoli92lswGJsEkodD1pCn1xmLqcZKh92RkjkAJpGcdq_sct_IZj1K38X5jg-zYGtsxrnUu2y904L2wWjnupZLadGyM57GMZ6N9fDRdMX84jOlG2yXkt7jNlae6HXtBfln4U238tWZaX57efwFLbMt1QEKW4EBPNkaXpNA6IApjMqD21lg1BWcDIWYClIbAICnyIZAGiI9VjVq7jtH7vewfbFA2KCG4-P4BuANblg:1vincZ:azHqg2eKZn5D9ADnuLIw-6hYvebLYrxHU53brNPkhr4",
+        csrftoken="fj5UiFAuLbZM0XF9hYHkvrQgkpejfRoW",
         auth_token="eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySW5mbyI6eyJ1c2VyQ29kZSI6IjAzNDIwMDkyIiwidXNlck5hbWUiOiLpmYjlhYkiLCJ1c2VyQ2xpZW50SWQiOiJQQy1YRC1TRVJWRVIiLCJleHRlbmRBdHRyaWJ1dGVzIjp7InVzZXJDaGFubmVsIjoiSFIiLCJ1c2VyTWFyayI6IkhSX0VYUFJFU1MifSwicmVsYXRpb25MaXN0IjpudWxsLCJtdWx0aU9yZ1ZPIjpudWxsfSwibG9naW5UaW1lIjoxNzY3NzcxNDI1LCJncmFudF90eXBlIjoieXRvX3RnYyIsInVzZXJfbmFtZSI6IjAzNDIwMDkyIiwic2NvcGUiOlsic2VydmVyIl0sImV4cCI6MTc2Nzc3ODYyNSwianRpIjoiMDA2MWI5YWEtZDU2NC00ZmU4LTg3M2ItYTExOTQ5MjkxZjU4IiwiY2xpZW50X2lkIjoiUEMtWEQtU0VSVkVSIn0.IaNcNTsbVoxdV8ZlZKMNpqKJRX3jjNSfuz0WVNIjeC0ssY-FwRCChETdcF5RR5ZrFtucpIwPdKAfF6h9bBE75wnfL7J7LoYF858IAo28md-g2kbueY4jPrHZMwaDIvxp5lfQSUOy0sXzLwhMiHoLnR7F-g8PcopgdfgfyF9N4Z0"
     )
 
@@ -369,11 +450,18 @@ if __name__ == "__main__":
 
     # 自动获取或创建项目
     project_id = client.ensure_project(
-        title="音频测试",
+        title="New Project #21",
         label_config=LABEL_CONFIG,
         description="测试",
         is_draft=True
     )
+
+    # 创建默认视图
+    try:
+        view_resp = client.create_default_view(project_id)
+        print(f"Default view created for project {project_id}, view ID: {view_resp.get('id')}")
+    except Exception as e:
+        print(f"Failed to create default view: {e}")
 
     # 批量处理 JSONL
     try:

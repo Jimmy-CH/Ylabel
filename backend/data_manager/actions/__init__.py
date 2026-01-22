@@ -56,6 +56,7 @@ def get_all_actions(user, project):
     """
     # copy and sort by order key
     actions = list(settings.DATA_MANAGER_ACTIONS.values())
+    print('actions', actions)
     actions = copy.deepcopy(actions)
     actions: list[DataManagerAction] = sorted(actions, key=lambda x: x['order'])
 

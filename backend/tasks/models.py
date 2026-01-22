@@ -47,6 +47,13 @@ logger = logging.getLogger(__name__)
 
 TaskMixin = load_func(settings.TASK_MIXIN)
 
+AUDIT_STATUS_CHOICES = [
+    (0, _('待审核')),
+    (1, _('审核通过')),
+    (2, _('需重标')),
+    (3, _('数据抛弃')),
+]
+
 
 class Task(TaskMixin, FsmHistoryStateModel):
     """Business tasks from project"""
@@ -64,6 +71,20 @@ class Task(TaskMixin, FsmHistoryStateModel):
         help_text='User imported or uploaded data for a task. Data is formatted according to '
         'the project label config. You can find examples of data for your project '
         'on the Import page in the Label Studio Data Manager UI.',
+    )
+
+    audit_status = models.PositiveSmallIntegerField(
+        _('audit status'),
+        choices=AUDIT_STATUS_CHOICES,
+        default=0,
+        db_index=True,
+        help_text='审核状态：0=待审核，1=审核通过，2=需重标，3=数据抛弃',
+    )
+    audit_reason = models.TextField(
+        _('audit reason'),
+        blank=True,
+        null=True,
+        help_text='审核不通过或需重标时填写的原因',
     )
 
     meta = JSONField(

@@ -255,9 +255,9 @@ MIDDLEWARE = [
 REST_FRAMEWORK = {
     'DEFAULT_FILTER_BACKENDS': ['django_filters.rest_framework.DjangoFilterBackend'],
     'DEFAULT_AUTHENTICATION_CLASSES': (
-        # 'jwt_auth.auth.TokenAuthenticationPhaseout',
-        # 'rest_framework.authentication.SessionAuthentication',
-        'jwt_auth.auth.SSOJWTAuthentication',
+        'jwt_auth.auth.TokenAuthenticationPhaseout',
+        'rest_framework.authentication.SessionAuthentication',
+        # 'jwt_auth.auth.SSOJWTAuthentication',
     ),
     'DEFAULT_PERMISSION_CLASSES': [
         # 'core.api_permissions.HasObjectPermission',
@@ -322,7 +322,7 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 # Django templates
-TEMPLATES_DIR = os.path.join(os.path.dirname(BASE_DIR), 'templates')  # ../../from_this = 'web' dir
+TEMPLATES_DIR = os.path.join(BASE_DIR, 'templates')  # ../../from_this = 'web' dir
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
@@ -334,7 +334,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
-                # 'core.context_processors.settings',
+                'core.context_processors.settings',
             ],
             'builtins': ['django.templatetags.i18n'],
         },
@@ -561,11 +561,11 @@ ALLOW_IMPORT_TASKS_WITH_UNKNOWN_EMAILS = get_bool_env('ALLOW_IMPORT_TASKS_WITH_U
 """ React Libraries: do not forget to change this dir in /etc/nginx/nginx.conf """
 
 # EDITOR = label-studio-frontend repository
-EDITOR_ROOT = os.path.join(BASE_DIR, '../../web/dist/libs/editor')
+EDITOR_ROOT = os.path.join(BASE_DIR, '../frontend/dist/libs/editor')
 # DM = data manager (included into FRONTEND due npm building, we need only version.json file from there)
-DM_ROOT = os.path.join(BASE_DIR, '../../web/dist/libs/datamanager')
+DM_ROOT = os.path.join(BASE_DIR, '../frontend/dist/libs/datamanager')
 # FRONTEND = GUI for django backend
-REACT_APP_ROOT = os.path.join(BASE_DIR, '../../web/dist/apps/labelstudio')
+REACT_APP_ROOT = os.path.join(BASE_DIR, '../frontend/dist/apps/labelstudio')
 
 # per project settings
 BATCH_SIZE = 1000

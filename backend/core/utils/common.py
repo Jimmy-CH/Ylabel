@@ -21,9 +21,10 @@ from typing import Any, Callable, Generator, Iterable, Mapping, Optional
 import pytz
 import requests
 import ujson as json
-# from core.utils.params import get_env
+from colorama import Fore
+from core.utils.params import get_env
 from django.conf import settings
-# from django.contrib.postgres.operations import BtreeGinExtension, TrigramExtension
+from django.contrib.postgres.operations import BtreeGinExtension, TrigramExtension
 from django.core.exceptions import ValidationError
 from django.core.paginator import EmptyPage, Paginator
 from django.core.validators import URLValidator
@@ -44,17 +45,25 @@ from django.utils.crypto import get_random_string
 from django.utils.module_loading import import_string
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import OpenApiParameter, OpenApiResponse
+from label_studio_sdk._extensions.label_studio_tools.core.utils.exceptions import (
+    LabelStudioXMLSyntaxErrorSentryIgnored,
+)
+from packaging.version import parse as parse_version
+from pyboxen import boxen
 from rest_framework import status
 from rest_framework.exceptions import APIException, ErrorDetail
 from rest_framework.views import Response, exception_handler
 
+import label_studio
+
 try:
-    from sentry_sdk import capture_exception, set_tag    # noqa
+    from sentry_sdk import capture_exception, set_tag
 
     sentry_sdk_loaded = True
 except (ModuleNotFoundError, ImportError):
     sentry_sdk_loaded = False
 
+from core import version
 from core.utils.exceptions import LabelStudioDatabaseLockedException
 
 # these functions will be included to another modules, don't remove them
@@ -97,7 +106,7 @@ def custom_exception_handler(exc, context):
     response_data = {
         'id': exception_id,
         'status_code': status.HTTP_500_INTERNAL_SERVER_ERROR,  # default value
-        # 'version': label_studio.__version__,
+        'version': label_studio.__version__,
         'detail': 'Unknown error',  # default value
         'exc_info': None,
     }
@@ -135,12 +144,11 @@ def custom_exception_handler(exc, context):
             exc_tb = None
         response_data['exc_info'] = exc_tb
         # Thrown by sdk when label config is invalid
-        # if isinstance(exc, LabelStudioXMLSyntaxErrorSentryIgnored):
-        #     response_data['status_code'] = status.HTTP_400_BAD_REQUEST
-        #     response = Response(status=status.HTTP_400_BAD_REQUEST, data=response_data)
-        # else:
-        #     response = Response(status=status.HTTP_500_INTERNAL_SERVER_ERROR, data=response_data)
-        response = Response(status=status.HTTP_500_INTERNAL_SERVER_ERROR, data=response_data)
+        if isinstance(exc, LabelStudioXMLSyntaxErrorSentryIgnored):
+            response_data['status_code'] = status.HTTP_400_BAD_REQUEST
+            response = Response(status=status.HTTP_400_BAD_REQUEST, data=response_data)
+        else:
+            response = Response(status=status.HTTP_500_INTERNAL_SERVER_ERROR, data=response_data)
 
     return response
 
@@ -363,8 +371,7 @@ def get_app_version():
 
 def get_latest_version():
     """Get version from pypi"""
-    # pypi_url = 'https://pypi.org/pypi/%s/json' % label_studio.package_name
-    pypi_url = 'https://pypi.org/pypi/%s/json'
+    pypi_url = 'https://pypi.org/pypi/%s/json' % label_studio.package_name
     try:
         response = requests.get(pypi_url, timeout=10).text
         data = json.loads(response)
@@ -374,6 +381,139 @@ def get_latest_version():
         logger.warning("Can't get latest version", exc_info=True)
     else:
         return {'latest_version': latest_version, 'upload_time': upload_time}
+
+
+def current_version_is_outdated(latest_version):
+    latest_version = parse_version(latest_version)
+    current_version = parse_version(label_studio.__version__)
+    return current_version < latest_version
+
+
+def check_for_the_latest_version(print_message):
+    """Check latest pypi version"""
+    if not settings.LATEST_VERSION_CHECK:
+        return
+
+    import label_studio
+
+    # prevent excess checks by time intervals
+    current_time = time.time()
+    if label_studio.__latest_version_check_time__ and current_time - label_studio.__latest_version_check_time__ < 60:
+        return
+    label_studio.__latest_version_check_time__ = current_time
+
+    data = get_latest_version()
+    if not data:
+        return
+    latest_version = data['latest_version']
+    outdated = latest_version and current_version_is_outdated(latest_version)
+
+    def update_package_message():
+        update_command = 'pip install -U ' + label_studio.package_name
+        return boxen(
+            'Update available {curr_version} → {latest_version}\nRun {command}'.format(
+                curr_version=label_studio.__version__, latest_version=latest_version, command=update_command
+            ),
+            style='double',
+        ).replace(update_command, Fore.CYAN + update_command + Fore.RESET)
+
+    if outdated and print_message:
+        print(update_package_message())
+
+    label_studio.__latest_version__ = latest_version
+    label_studio.__latest_version_upload_time__ = data['upload_time']
+    label_studio.__current_version_is_outdated__ = outdated
+
+
+# check version ASAP while package loading
+# skip notification for uwsgi, as we're running in production ready mode
+if settings.APP_WEBSERVER != 'uwsgi':
+    check_for_the_latest_version(print_message=True)
+
+
+def collect_versions(force=False):
+    """Collect versions for all modules
+
+    :return: dict with sub-dicts of version descriptions
+    """
+    import label_studio
+
+    # prevent excess checks by time intervals
+    current_time = time.time()
+    need_check = current_time - settings.VERSIONS_CHECK_TIME > 300
+    settings.VERSIONS_CHECK_TIME = current_time
+
+    if settings.VERSIONS and not force and not need_check:
+        return settings.VERSIONS
+
+    # main pypi package
+    result = {
+        'release': label_studio.__version__,
+        'label-studio-os-package': {
+            'version': label_studio.__version__,
+            'short_version': '.'.join(label_studio.__version__.split('.')[:2]),
+            'latest_version_from_pypi': label_studio.__latest_version__,
+            'latest_version_upload_time': label_studio.__latest_version_upload_time__,
+            'current_version_is_outdated': label_studio.__current_version_is_outdated__,
+        },
+        # backend full git info
+        'label-studio-os-backend': version.get_git_commit_info(ls=True),
+    }
+
+    # label studio frontend
+    try:
+        with open(os.path.join(settings.EDITOR_ROOT, 'version.json')) as f:
+            lsf = json.load(f)
+        result['label-studio-frontend'] = lsf
+    except:  # noqa: E722
+        pass
+
+    # data manager
+    try:
+        with open(os.path.join(settings.DM_ROOT, 'version.json')) as f:
+            dm = json.load(f)
+        result['dm2'] = dm
+    except:  # noqa: E722
+        pass
+
+    # converter from label-studio-sdk
+    try:
+        import label_studio_sdk.converter
+
+        result['label-studio-converter'] = {'version': label_studio_sdk.__version__}
+    except Exception:
+        pass
+
+    # ml
+    try:
+        import label_studio_ml
+
+        result['label-studio-ml'] = {'version': label_studio_ml.__version__}
+    except Exception:
+        pass
+
+    result.update(settings.COLLECT_VERSIONS(result=result))
+
+    for key in result:
+        if 'message' in result[key] and len(result[key]['message']) > 70:
+            result[key]['message'] = result[key]['message'][0:70] + ' ...'
+
+    if settings.SENTRY_DSN:
+        import sentry_sdk
+
+        sentry_sdk.set_context('versions', copy.deepcopy(result))
+
+        for package in result:
+            if 'version' in result[package]:
+                sentry_sdk.set_tag('version-' + package, result[package]['version'])
+            if 'commit' in result[package]:
+                sentry_sdk.set_tag('commit-' + package, result[package]['commit'])
+
+    # edition type
+    result['edition'] = settings.VERSION_EDITION
+
+    settings.VERSIONS = result
+    return result
 
 
 def get_organization_from_request(request):
@@ -531,32 +671,32 @@ class temporary_disconnect_list_signal:
             sig.connect(receiver=receiver, sender=sender, dispatch_uid=dispatch_uid)
 
 
-# def trigram_migration_operations(next_step):
-#     ops = [
-#         TrigramExtension(),
-#         next_step,
-#     ]
-#     SKIP_TRIGRAM_EXTENSION = get_env('SKIP_TRIGRAM_EXTENSION', None)
-#     if SKIP_TRIGRAM_EXTENSION == '1' or SKIP_TRIGRAM_EXTENSION == 'yes' or SKIP_TRIGRAM_EXTENSION == 'true':
-#         ops = [next_step]
-#     if SKIP_TRIGRAM_EXTENSION == 'full':
-#         ops = []
-#
-#     return ops
+def trigram_migration_operations(next_step):
+    ops = [
+        TrigramExtension(),
+        next_step,
+    ]
+    SKIP_TRIGRAM_EXTENSION = get_env('SKIP_TRIGRAM_EXTENSION', None)
+    if SKIP_TRIGRAM_EXTENSION == '1' or SKIP_TRIGRAM_EXTENSION == 'yes' or SKIP_TRIGRAM_EXTENSION == 'true':
+        ops = [next_step]
+    if SKIP_TRIGRAM_EXTENSION == 'full':
+        ops = []
+
+    return ops
 
 
-# def btree_gin_migration_operations(next_step):
-#     ops = [
-#         BtreeGinExtension(),
-#         next_step,
-#     ]
-#     SKIP_BTREE_GIN_EXTENSION = get_env('SKIP_BTREE_GIN_EXTENSION', None)
-#     if SKIP_BTREE_GIN_EXTENSION == '1' or SKIP_BTREE_GIN_EXTENSION == 'yes' or SKIP_BTREE_GIN_EXTENSION == 'true':
-#         ops = [next_step]
-#     if SKIP_BTREE_GIN_EXTENSION == 'full':
-#         ops = []
-#
-#     return ops
+def btree_gin_migration_operations(next_step):
+    ops = [
+        BtreeGinExtension(),
+        next_step,
+    ]
+    SKIP_BTREE_GIN_EXTENSION = get_env('SKIP_BTREE_GIN_EXTENSION', None)
+    if SKIP_BTREE_GIN_EXTENSION == '1' or SKIP_BTREE_GIN_EXTENSION == 'yes' or SKIP_BTREE_GIN_EXTENSION == 'true':
+        ops = [next_step]
+    if SKIP_BTREE_GIN_EXTENSION == 'full':
+        ops = []
+
+    return ops
 
 
 def merge_labels_counters(dict1, dict2):

@@ -243,5 +243,8 @@ class User(UserMixin, AbstractBaseUser, PermissionsMixin, UserLastActivityMixin)
 @receiver(post_save, sender=User)
 def init_user(sender, instance=None, created=False, **kwargs):
     if created:
-        # create token for user  使用SSO的Token不需要创建
+        # create token for user
         Token.objects.create(user=instance)
+        # organization, created = Organization.objects.get_or_create(title='数据标注组')
+        # instance.active_organization = organization
+        # instance.save()

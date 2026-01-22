@@ -3,7 +3,9 @@
 import logging
 import os
 import pathlib
+import json
 
+from rest_framework.views import APIView
 from core.feature_flags import flag_set
 from core.filters import ListFilter
 from core.label_config import config_essential_data_has_changed
@@ -18,7 +20,7 @@ from core.utils.serializer_to_openapi_params import serializer_to_openapi_params
 from data_manager.functions import filters_ordering_selected_items_exist, get_prepared_queryset
 from django.conf import settings
 from django.db import IntegrityError
-from django.db.models import F
+from django.db.models import F, Sum
 from django.http import Http404
 from django.utils.decorators import method_decorator
 from django_filters import CharFilter, FilterSet
@@ -64,6 +66,13 @@ from webhooks.models import WebhookAction
 from webhooks.utils import api_webhook, api_webhook_for_delete, emit_webhooks_for_instance
 
 from core.utils.common import load_func
+
+from pathlib import Path
+from django.conf import settings as django_settings
+from projects.template_translations import (
+    TEMPLATE_TITLE_TRANSLATIONS,
+    TEMPLATE_GROUP_TRANSLATIONS
+)
 
 logger = logging.getLogger(__name__)
 
@@ -784,28 +793,101 @@ class ProjectTaskListAPI(GetParentObjectMixin, generics.ListCreateAPIView, gener
         return instance
 
 
-def read_templates_and_groups():
-    annotation_templates_dir = find_dir('annotation_templates')
-    configs = []
-    for config_file in pathlib.Path(annotation_templates_dir).glob('**/*.yml'):
-        config = read_yaml(config_file)
+# def read_templates_and_groups():
+#     annotation_templates_dir = find_dir('annotation_templates')
+#     configs = []
+#     for config_file in pathlib.Path(annotation_templates_dir).glob('**/*.yml'):
+#         config = read_yaml(config_file)
+#
+#         if settings.VERSION_EDITION != 'Community':
+#             if config.get('group', '').lower() == 'community contributions':
+#                 continue
+#
+#         if config.get('image', '').startswith('/static') and settings.HOSTNAME:
+#             # if hostname set manually, create full image urls
+#             config['image'] = settings.HOSTNAME + config['image']
+#         configs.append(config)
+#     template_groups_file = find_file(os.path.join('annotation_templates', 'groups.txt'))
+#     with open(template_groups_file, encoding='utf-8') as f:
+#         groups = f.read().splitlines()
+#
+#     if settings.VERSION_EDITION != 'Community':
+#         groups = [group for group in groups if group.lower() != 'community contributions']
+#
+#     logger.debug(f'{len(configs)} templates found.')
+#     return {'templates': configs, 'groups': groups}
 
-        if settings.VERSION_EDITION != 'Community':
-            if config.get('group', '').lower() == 'community contributions':
+
+def read_templates_and_groups():
+    base_dir = Path(django_settings.BASE_DIR)
+    custom_templates_dir = base_dir / "custom_templates"
+
+    configs = []
+    if not custom_templates_dir.exists():
+        logger.warning(f"Custom templates directory not found: {custom_templates_dir}")
+        return {'templates': [], 'groups': []}
+
+    for config_file in custom_templates_dir.glob('**/*.yml'):
+        try:
+            config = read_yaml(config_file)
+        except Exception as e:
+            logger.error(f"Failed to load template {config_file}: {e}")
+            continue
+
+        # === 汉化 title ===
+        original_title = config.get('title', '')
+        if original_title:
+            config['title'] = TEMPLATE_TITLE_TRANSLATIONS.get(original_title, original_title)
+
+        # === 汉化 group ===
+        original_group = config.get('group', '')
+        if original_group:
+            config['group'] = TEMPLATE_GROUP_TRANSLATIONS.get(original_group, original_group)
+
+        # 过滤逻辑放在汉化前！
+        if django_settings.VERSION_EDITION != 'Community':
+            if original_group.lower() == 'community contributions':
                 continue
 
-        if config.get('image', '').startswith('/static') and settings.HOSTNAME:
-            # if hostname set manually, create full image urls
-            config['image'] = settings.HOSTNAME + config['image']
+        # 补全 image URL
+        if config.get('image', '').startswith('/static') and getattr(django_settings, 'HOSTNAME', None):
+            config['image'] = django_settings.HOSTNAME + config['image']
+
         configs.append(config)
-    template_groups_file = find_file(os.path.join('annotation_templates', 'groups.txt'))
-    with open(template_groups_file, encoding='utf-8') as f:
-        groups = f.read().splitlines()
 
-    if settings.VERSION_EDITION != 'Community':
-        groups = [group for group in groups if group.lower() != 'community contributions']
+    # 读取 groups.txt 并汉化
+    groups_file = custom_templates_dir / "groups.txt"
+    groups = []
+    if groups_file.exists():
+        try:
+            with open(groups_file, encoding='utf-8') as f:
+                raw_groups = [line.strip() for line in f.read().splitlines() if line.strip()]
+            # 汉化每个 group
+            groups = [
+                TEMPLATE_GROUP_TRANSLATIONS.get(g, g)
+                for g in raw_groups
+            ]
+        except Exception as e:
+            logger.error(f"Failed to read groups.txt: {e}")
+    else:
+        logger.info("groups.txt not found, using empty group list.")
 
-    logger.debug(f'{len(configs)} templates found.')
+    # 先过滤，再汉化
+    if groups_file.exists():
+        try:
+            with open(groups_file, encoding='utf-8') as f:
+                raw_groups = [line.strip() for line in f.read().splitlines() if line.strip()]
+
+            # 先过滤（基于英文原值）
+            if django_settings.VERSION_EDITION != 'Community':
+                raw_groups = [g for g in raw_groups if g.lower() != 'community contributions']
+
+            # 再汉化
+            groups = [TEMPLATE_GROUP_TRANSLATIONS.get(g, g) for g in raw_groups]
+        except Exception as e:
+            logger.error(f"Failed to read groups.txt: {e}")
+
+    logger.debug(f'{len(configs)} custom templates found.')
     return {'templates': configs, 'groups': groups}
 
 
@@ -930,3 +1012,62 @@ class ProjectAnnotatorsAPI(generics.RetrieveAPIView):
         users = User.objects.filter(id__in=annotator_ids).prefetch_related('om_through').order_by('id')
         data = UserSimpleSerializer(users, many=True, context={'request': request}).data
         return Response(data)
+
+
+class ProjectAnnotationStatsView(APIView):
+
+    def get(self, request):
+
+        project_id = request.query_params.get('project_id')
+        if not project_id:
+            return Response({"error": "Missing 'project_id' parameter"}, status=400)
+
+        try:
+            project_id = int(project_id)
+        except (TypeError, ValueError):
+            return Response({"error": "'project_id' must be an integer"}, status=400)
+        # 过滤：指定项目、未取消、result 非空
+        annotations = Annotation.objects.filter(
+            project_id=project_id,
+            was_cancelled=False
+        ).exclude(
+            result__isnull=True
+        ).exclude(
+            result=[]
+        )
+
+        total_lead_time = annotations.aggregate(
+            total=Sum('lead_time')
+        )['total'] or 0.0
+
+        total_segments = 0
+        total_segment_duration = 0.0
+
+        # 遍历每个 annotation 的 result
+        for anno in annotations.only('result'):
+            if not anno.result:
+                continue
+            try:
+                results = anno.result if isinstance(anno.result, list) else json.loads(anno.result)
+            except (TypeError, ValueError):
+                continue
+
+            for item in results:
+                value = item.get('value', {})
+                start = value.get('start')
+                end = value.get('end')
+                if start is not None and end is not None and end >= start:
+                    total_segments += 1
+                    total_segment_duration += (end - start)
+
+        # 转换为分钟并四舍五入取整
+        total_duration_minutes = round(total_lead_time / 60)
+        total_region_duration_minutes = round(total_segment_duration / 60)
+
+        return Response({
+            "project_id": project_id,
+            "total_duration": total_duration_minutes,          # 标注总耗时（分钟，整数）
+            "total_region_duration": total_region_duration_minutes,  # 片段总时长（分钟，整数）
+            "total_region_count": total_segments,                      # 片段总数
+        })
+

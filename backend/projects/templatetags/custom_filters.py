@@ -1,5 +1,5 @@
-"""This file and its contents are licensed under the Apache License 2.0. Please see the included NOTICE for copyright information and LICENSE for a copy of the license.
-"""
+"""This file and its contents are licensed under the Apache License 2.0. Please see the included NOTICE for copyright information and LICENSE for a copy of the license."""
+import json
 from django import template
 
 register = template.Library()
@@ -25,3 +25,9 @@ def seconds_to_pretty_time(value, show_seconds=False):
         return '1 hour'
     else:
         return f'{h} hours'
+
+
+@register.filter
+def json_dumps_ensure_ascii(value):
+    """Convert a Python object to a JSON string with ensure_ascii=False."""
+    return json.dumps(value, ensure_ascii=False)

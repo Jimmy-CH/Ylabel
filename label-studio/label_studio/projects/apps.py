@@ -1,0 +1,21 @@
+"""Projects Django App Configuration"""
+
+import logging
+
+from django.apps import AppConfig
+
+logger = logging.getLogger(__name__)
+
+
+class ProjectsConfig(AppConfig):
+    default_auto_field = 'django.db.models.BigAutoField'
+    name = 'projects'
+
+    def ready(self):
+        """
+        Projects app initialization.
+
+        Note: FSM transitions are now registered centrally in fsm/apps.py.
+        Do NOT import transitions here to avoid duplicate registration.
+        """
+        pass
